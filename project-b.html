@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Low-poly Animals</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="500" height="500" style="float:left;">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+    <div style="float:left; width:500px; margin-left:20px;">
+      <div>
+        <h2>Project A: Low-poly Animals</h2>
+        <p>
+          Hi! I'm Bew, and to the left you can see my eagle and fox. The scene 
+          is currently set to load with the animals directly facing you. However, 
+          you can interact with them with the following controls:
+        </p>
+        <ol>
+          <li>
+            Drag anywhere within the canvas to rotate the animals around.
+          </li>
+          <li>
+            Use the keyboard arrow keys to move the animals around on the canvas.
+          </li>
+          <li>
+            Click anywhere in the canvas to randomly change the color of the
+            animals.
+          </li>
+          <li>
+            Press spacebar to play/pause all animations.
+          </li>
+        </ol>
+      </div>
+      <div>
+        Show/Hide:
+        <input type="checkbox" 
+               id="toggle-eagle"
+               onchange="toggleEagle(this)"
+               checked>Eagle
+        <input type="checkbox"
+               id="toggle-fox"
+               onchange="toggleFox(this)" 
+               checked>Fox<br>
+        <small style="color:#777;">
+          Check/uncheck each checkbox to show/hide corresponding animal
+        </small>
+      </div>
+      <br>
+      <div>
+        Auto Recolor:
+        <input type="checkbox"
+               id="toggle-auto-recolor"
+               onchange="toggleAutoRecolor(this)">Enable
+        with interval:
+        <input type="number"
+               id="auto-recolor-interval" 
+               value="1"
+               onchange="updateAutoRecolorInterval(this.value)"> seconds
+        <br>
+        <small style="color:#777;">
+          Check/uncheck to enable automatic re-color of the animals. The
+          recoloring will occur every x seconds as input in the box. 
+          (Note: This has the same effect as clicking inside the canvas.)
+        </small>
+      </div>
+      <br>
+      <div>
+        <button onclick="play()">Play</button>
+        <button onclick="pause()">Pause</button>
+        <button onclick="reset()">Reset</button>
+        <br>
+        <small style="color:#777;">
+          Use these buttons to play, pause, or reset. The play and pause
+          buttons have the same effect as the pressing the spacebar. The 
+          reset button resets all animations to the beginning state (does
+          not reset the color, however).
+        </small>
+      </div>
+    </div>
+
+    <script src="lib/webgl-utils.js"></script>
+    <script src="lib/webgl-debug.js"></script>
+    <script src="lib/cuon-utils.js"></script>
+    <script src="lib/cuon-matrix-quat.js"></script>
+    <script src="project-b.js"></script>
+    <script src="project-b-utils.js"></script>
+    <script src="project-b-eagle.js"></script>
+    <script src="project-b-fox.js"></script>
+  </body>
+</html>
