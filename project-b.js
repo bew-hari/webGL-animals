@@ -30,28 +30,27 @@ var FSIZE = Float32Array.BYTES_PER_ELEMENT;
 var OVERALL_ANGLE_STEP = 45.0,
     OVERALL_TRANSLATE_STEP = 0.5,
     EAGLE_WING_ANGLE_STEP = 100.0,
-    FOX_LEG_ANGLE_STEP = 150.0,
-    RECOLOR_INTERVAL = 1000.0;
+    FOX_LEG_ANGLE_STEP = 150.0;
+
+var globals = {};
 
 // animation rates
 function initRates() {
-  rates = {
+  globals.rates = {
     overallHorizontalStep: 0,
     overallVerticalStep: 0,
     eagleWingAngleStep: EAGLE_WING_ANGLE_STEP,
     foxUpperLegAngleStep: FOX_LEG_ANGLE_STEP,
     foxLowerLegAngleStep: FOX_LEG_ANGLE_STEP,
-    recolorTimer: RECOLOR_INTERVAL,
   };
 }
 
 // animation state
 function initState() {
-  state = {
+  globals.state = {
     isPaused: false,
     showEagle: true,
     showFox: true,
-    autoRecolor: false,
     overallHorizontalOffset: 0.0,
     overallVerticalOffset: 0.0,
     orientation: {
@@ -72,7 +71,7 @@ function initState() {
 
 // mouse data
 function initMouse() {
-  mouse = {
+  globals.mouse = {
     isDragging: false,
     click: {
       x: 0,
@@ -111,17 +110,18 @@ function main() {
     return;
   }
 
-  // Write the positions of vertices to a vertex shader
+  // Create data and write the positions of vertices to a vertex shader
+  globals.data = new VerticesData();
+  console.log(globals);
+
   var buffer = initVertexBuffers(gl);
   
-  var data = buffer.data,
-      vertexBuffer = buffer.vertexBuffer;
-  if (data.numElements < 0) {
+  if (globals.data.numElements < 0) {
     console.log('Failed to set the positions of the vertices');
     return;
   }
 
-  registerMouseEvents(canvas, gl, mouse, data, vertexBuffer);
+  registerMouseEvents(canvas, gl);
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -168,9 +168,9 @@ function main() {
 
   // Start drawing
   var tick = function() {
-    animate(state, gl, data, buffer.vertexBuffer);
+    animate(gl, buffer);
 
-    draw(gl, data, state, mouse, modelMatrix, u_ModelMatrix);
+    draw(gl, modelMatrix, u_ModelMatrix);
     
     // request that the browser calls tick
     requestId = requestAnimationFrame(tick, canvas);
@@ -180,8 +180,7 @@ function main() {
 
 function initVertexBuffers(gl) {
 
-  var data = new VerticesData();
-  console.log(data);
+  var data = globals.data;
 
   // Create a buffer object
   var vertexBuffer = gl.createBuffer();
@@ -230,13 +229,14 @@ function initVertexBuffers(gl) {
   gl.enableVertexAttribArray(a_Color);  
                     // Enable assignment of vertex buffer object's position data
 
-  return {
-    data: data,
-    vertexBuffer: vertexBuffer,
-  };
+  return vertexBuffer;
 }
 
-function draw(gl, data, state, mouse, modelMatrix, u_ModelMatrix) {
+function draw(gl, modelMatrix, u_ModelMatrix) {
+  var data = globals.data;
+  var state = globals.state;
+  var mouse = globals.mouse;
+
   // Clear <canvas>  colors AND the depth buffer
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -555,7 +555,9 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 // Last time that this function was called
 var g_last = Date.now();
 
-function animate(state, gl, data, buffer) {
+function animate(gl, buffer) {
+  var state = globals.state;
+  var rates = globals.rates;
 
   // Calculate the elapsed time
   var now = Date.now();
@@ -604,24 +606,7 @@ function animate(state, gl, data, buffer) {
 
   newAngle = lowerLegAngle + (rates.foxLowerLegAngleStep * elapsed) / 1000.0;
   newAngle %= 360;
-  state.fox.lowerLegAngle = newAngle;
-
-  if (state.autoRecolor) {
-    if (rates.recolorTimer <= 0) {
-      // randomize color
-      data.randomizeColor();
-
-      // Bind the buffer object to target
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      // Write data into the buffer object
-      gl.bufferData(gl.ARRAY_BUFFER, data.vertices, gl.STATIC_DRAW);
-
-      // then reset timer
-      rates.recolorTimer = RECOLOR_INTERVAL;
-    } else {
-      rates.recolorTimer -= elapsed;
-    }
-  } 
+  state.fox.lowerLegAngle = newAngle; 
 }
 
 // HTML elements functions
@@ -641,8 +626,6 @@ function reset() {
   // reset HTML elements
   document.getElementById('toggle-eagle').checked = true;
   document.getElementById('toggle-fox').checked = true;
-  document.getElementById('toggle-auto-recolor').checked = false;
-  document.getElementById('auto-recolor-interval').value = 1;
 }
 
 function toggleEagle(cb) {
@@ -659,24 +642,11 @@ function toggleFox(cb) {
     state.showFox = false;
 }
 
-function toggleAutoRecolor(cb) {
-  if (cb.checked) {
-    rates.recolorTimer = RECOLOR_INTERVAL;
-    state.autoRecolor = true;
-  } else {
-    state.autoRecolor = false;
-  }
-}
-
-function updateAutoRecolorInterval(value) {
-  RECOLOR_INTERVAL = value * 1000.0;
-}
-
 // mouse functions
-function registerMouseEvents(canvas, gl, mouse, data, buffer) {
-  canvas.onmousedown = function(e) { myMouseDown(e, gl, canvas, mouse); };
-  canvas.onmousemove = function(e) { myMouseMove(e, gl, canvas, mouse); };
-  canvas.onmouseup = function(e) { myMouseUp(e, gl, canvas, mouse, data, buffer); };
+function registerMouseEvents(canvas, gl) {
+  canvas.onmousedown = function(e) { myMouseDown(e, gl, canvas); };
+  canvas.onmousemove = function(e) { myMouseMove(e, gl, canvas); };
+  canvas.onmouseup = function(e) { myMouseUp(e, gl, canvas); };
 }
 
 function unregisterMouseEvents(canvas, gl) {
@@ -685,7 +655,9 @@ function unregisterMouseEvents(canvas, gl) {
   canvas.onmouseup = null;
 }
 
-function myMouseDown(e, gl, canvas, mouse) {
+function myMouseDown(e, gl, canvas) {
+  var mouse = globals.mouse;
+
   // get canvas corners in pixels
   var rect = e.target.getBoundingClientRect();
   // x==0 at canvas left edge, y==0 at canvas bottom edge
@@ -704,7 +676,10 @@ function myMouseDown(e, gl, canvas, mouse) {
   mouse.pos.y = y;
 }
 
-function myMouseMove(e, gl, canvas, mouse) {
+function myMouseMove(e, gl, canvas) {
+  var mouse = globals.mouse;
+  var state = globals.state;
+
   if (!mouse.isDragging) return;
 
   // get canvas corners in pixels
@@ -728,7 +703,11 @@ function myMouseMove(e, gl, canvas, mouse) {
   mouse.pos.y = y;
 }
 
-function myMouseUp(e, gl, canvas, mouse, data, buffer) {
+function myMouseUp(e, gl, canvas) {
+  var mouse = globals.mouse;
+  var state = globals.state;
+  var data = globals.data;
+
   // get canvas corners in pixels
   var rect = e.target.getBoundingClientRect();
   // x==0 at canvas left edge, y==0 at canvas bottom edge
@@ -751,16 +730,13 @@ function myMouseUp(e, gl, canvas, mouse, data, buffer) {
   // check for click
   if (Math.abs(x - mouse.click.x) < 0.001 
       && Math.abs(y - mouse.click.y) < 0.001) {
-    data.randomizeColor();
-
-    // Bind the buffer object to target
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    // Write data into the buffer object
-    gl.bufferData(gl.ARRAY_BUFFER, data.vertices, gl.STATIC_DRAW);
+    
+    // do something for click
   }
 }
 
 window.onkeydown = function(e) {
+  var rates = globals.rates;
 
   if (e.keyCode == 37) // left arrow
     rates.overallHorizontalStep = OVERALL_TRANSLATE_STEP;
@@ -773,6 +749,8 @@ window.onkeydown = function(e) {
 };
 
 window.onkeyup = function(e) {
+  var rates = globals.rate;
+  var state = globals.state;
 
   if ((e.keyCode == 37) || (e.keyCode == 39)) 
     rates.overallHorizontalStep = 0;
