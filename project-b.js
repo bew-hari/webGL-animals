@@ -1,19 +1,23 @@
 // RotatingTriangle.js (c) 2012 matsuda
 // Vertex shader program
 var VSHADER_SOURCE =
-  'uniform mat4 u_ModelMatrix;\n' +
   'attribute vec4 a_Position;\n' +
   'attribute vec4 a_Color;\n' +
+  'uniform mat4 u_ModelMatrix;\n' +
+  'uniform mat4 u_ViewMatrix;\n' +
+  'uniform mat4 u_ProjMatrix;\n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
-  '  gl_Position = u_ModelMatrix * a_Position;\n' +
+  '  gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n' +
   '  gl_PointSize = 10.0;\n' +
   '  v_Color = a_Color;\n' +
   '}\n';
 
 // Fragment shader program
 var FSHADER_SOURCE =
+  '#ifdef GL_ES\n' +
   'precision mediump float;\n' +
+  '#endif\n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
   '  gl_FragColor = v_Color;\n' +
@@ -131,8 +135,36 @@ function main() {
     return;
   }
 
-  // Model matrix
+  var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+  if (!u_ViewMatrix) { 
+    console.log('Failed to get u_ViewMatrix');
+    return;
+  }
+
+  var u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix');
+  if (!u_ProjMatrix) { 
+    console.log('Failed to get u_ProjMatrix');
+    return;
+  }
+
+  // Create matrices for mvp
   var modelMatrix = new Matrix4();
+  var viewMatrix = new Matrix4();
+  var projMatrix = new Matrix4();
+  
+  // Specify viewports
+  gl.viewport(0,                              // Viewport lower-left corner
+              0,                              // (x,y) location(in pixels)
+              gl.drawingBufferWidth/2,        // viewport width, height.
+              gl.drawingBufferHeight/2);
+  viewMatrix.setLookAt(0, 0, 3, 0, 0, -100, 0, 1, 0);
+  //viewMatrix.rotate(-90.0, 1,0,0);          // new one has +z pointing upwards
+  projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
+  
+  // Pass the model, view, and projection matrix to the uniform variable respectively
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+  gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
   // Start drawing
   var tick = function() {
@@ -201,90 +233,6 @@ function initVertexBuffers(gl) {
   return {
     data: data,
     vertexBuffer: vertexBuffer,
-  };
-}
-
-function VerticesData() {
-  var eagle = new Eagle(),
-      fox = new Fox();
-
-  var numElements = eagle.numElements + fox.numElements
-  var vertices = new Float32Array(numElements);
-
-  // copy vertices and remove unnecessary older copy
-  vertices.set(eagle.vertices, 0);
-  vertices.set(fox.vertices, eagle.numElements);
-  delete eagle.vertices;
-  delete fox.vertices;
-
-  // adjust start vertices
-  fox.adjustStartVertices(eagle.numElements / FLOATS_PER_VERTEX);
-
-  // save properties
-  this.eagle = eagle;
-  this.fox = fox;
-  this.numElements = numElements;
-  this.vertices = vertices;
-
-  // add a color randomizer
-  this.eagle.colorMultiplier = 1.0;
-  this.eagle.colorChannelModified = 0;
-  this.fox.colorMultiplier = 1.0;
-  this.fox.colorChannelModified = 0;
-  this.randomizeColor = function() {
-    // modify eagle color
-    var start = 0,
-        end = start + this.eagle.numElements;
-
-    // randomly generate multiplier and select color channel
-    var multiplier = (Math.random() + 1),
-        channel = Math.round(Math.random()*2) + 4;
-
-    for (var i=start; i<end; i+=FLOATS_PER_VERTEX) {
-      // correct previously modified channel
-      this.vertices[i+this.eagle.colorChannelModified] /= this.eagle.colorMultiplier;
-      this.vertices[i+channel] *= multiplier;
-    }
-
-    // save for corrections in subsequent calls
-    this.eagle.colorMultiplier = multiplier;
-    this.eagle.colorChannelModified = channel;
-
-    // modify fox color
-    start = this.eagle.numElements;
-    end = start + this.fox.numElements;
-
-    // randomly generate multiplier and select color channel
-    multiplier = Math.random()*2 + 0.01;
-    channel = Math.round(Math.random()*2) + 4;
-
-    for (var i=start; i<end; i+=FLOATS_PER_VERTEX) {
-      // correct previously modified channel
-      this.vertices[i+this.fox.colorChannelModified] /= this.fox.colorMultiplier;
-      this.vertices[i+channel] *= multiplier;
-    }
-
-    // save for corrections in subsequent calls
-    this.fox.colorMultiplier = multiplier;
-    this.fox.colorChannelModified = channel;
-  };
-
-  this.resetColor = function() {
-    // reset eagle color
-    var start = 0,
-        end = start + this.eagle.numElements;
-
-    for (var i=start; i<end; i+=FLOATS_PER_VERTEX) {
-      this.vertices[i+this.eagle.colorChannelModified] /= this.eagle.colorMultiplier;
-    }
-
-    // reset fox color
-    start = this.eagle.numElements;
-    end = start + this.fox.numElements;
-
-    for (var i=start; i<end; i+=FLOATS_PER_VERTEX) {
-      this.vertices[i+this.fox.colorChannelModified] /= this.fox.colorMultiplier;
-    }
   };
 }
 
