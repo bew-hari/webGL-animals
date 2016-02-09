@@ -158,7 +158,9 @@ function main() {
     // Clear <canvas>  colors AND the depth buffer
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
+
     // Lower left viewport
+    // ----------------------------------------------------------------------
     gl.viewport(0,                              // Viewport lower-left corner
                 0,                              // (x,y) location(in pixels)
                 gl.drawingBufferWidth/2,        // viewport width, height.
@@ -169,7 +171,9 @@ function main() {
 
     draw(gl, canvas, matrices);
 
+
     // Lower right viewport
+    // ----------------------------------------------------------------------
     gl.viewport(gl.drawingBufferWidth/2,        // Viewport lower-right corner
                 0,                              // (x,y) location(in pixels)
                 gl.drawingBufferWidth/2,        // viewport width, height.
@@ -180,7 +184,6 @@ function main() {
     matrices.projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 5.0);
     
     draw(gl, canvas, matrices);
-    
     
     // request that the browser calls tick
     requestId = requestAnimationFrame(tick, canvas);
@@ -247,8 +250,6 @@ function draw(gl, canvas, matrices) {
   var data = globals.data;
   var state = globals.state;
 
-  var u_ModelMatrix = matrices.u_ModelMatrix;
-  var modelMatrix = matrices.modelMatrix;
   var u_ViewMatrix = matrices.u_ViewMatrix;
   var viewMatrix = matrices.viewMatrix;
   var u_ProjMatrix = matrices.u_ProjMatrix;
@@ -257,13 +258,26 @@ function draw(gl, canvas, matrices) {
   // Pass in the projection matrix
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
-  // Pass in unaltered view matrix (+y is up)
+  // Pass in the unaltered view matrix (+y is up)
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
   // Draw the models
   drawModels(gl, matrices);
 
-  // Now reset the model matrix and set up the view matrix for the environment
+  // Draw the environment
+  drawEnvironment(gl, matrices);
+}
+
+function drawEnvironment(gl, matrices) {
+  var data = globals.data;
+  var state = globals.state;
+
+  var u_ModelMatrix = matrices.u_ModelMatrix;
+  var modelMatrix = matrices.modelMatrix;
+  var u_ViewMatrix = matrices.u_ViewMatrix;
+  var viewMatrix = matrices.viewMatrix;
+
+  // Reset the model matrix and set up the view matrix for the environment
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   
@@ -274,10 +288,8 @@ function draw(gl, canvas, matrices) {
   viewMatrix.rotate(-90.0, 1, 0, 0);
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
-  drawEnvironment(gl, data.environment);
-}
-
-function drawEnvironment(gl, environment) {
+  // draw the ground
+  var environment = data.environment;
   gl.drawArrays(gl.LINES,
       environment.startVertexOffset + environment.ground.startVertexOffset,
       environment.ground.numVertices);
@@ -316,10 +328,13 @@ function drawModels(gl, matrices) {
 
   modelMatrix = popMatrix();
 
+/*
   // draw fox if not hidden by user
   if (state.showFox) {
     drawFox(gl, data.fox, state.fox, modelMatrix, u_ModelMatrix);
   }
+*/
+
 }
 
 function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix) {
@@ -654,8 +669,8 @@ function animate(gl, buffer) {
 }
 
 // HTML elements functions
-function play() { state.isPaused = false; }
-function pause() { state.isPaused = true; }
+function play() { globals.state.isPaused = false; }
+function pause() { globals.state.isPaused = true; }
 function reset() {
   initGlobals();
 
