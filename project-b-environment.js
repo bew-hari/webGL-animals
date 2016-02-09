@@ -69,3 +69,34 @@ function makeGroundVertices() {
 
   return vertices;
 }
+
+function makeTreeVertices() {
+  var numCapVertices = 8;
+  var radius = {
+    lowerTrunk: 0.25,
+    middleTrunk: 0.2,
+    upperTrunk: 0.2,
+    lowerLeavesBottom: 0.8,
+    lowerLeavesTop: 0.4,
+    middleLeavesBottom: 0.6,
+    middleLeavesTop: 0.2,
+    upperLeavesBottom: 0.4,
+    upperLeavesTop: 0.0,
+  };
+
+  var vertices = new Float32Array((numCapVertices*18) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  // initialize modifications
+  var modA = {
+    scale: {x: 0.0, y: 0.0, z: 0.0}, 
+    translate: {x: 0.0, y: -0.08, z: 1.0},
+    color: {r: 1.0, g: 0.8, b: 0.0}
+  };
+
+  var modB = {
+    scale: {x: radius.midBeak, y: radius.midBeak, z: 0.0}, 
+    translate: {x: 0.0, y: -0.02, z: 0.92},
+    color: {r: 1.0, g: 0.8, b: 0.0}
+  };
+}

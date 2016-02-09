@@ -69,7 +69,7 @@ function makeEagleBody() {
   var vertices = new Float32Array((numCapVertices*14) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  // initialize modification objects
+  // initialize modifications
   var modA = {
     scale: {x: 0.0, y: 0.0, z: 0.0}, 
     translate: {x: 0.0, y: -0.08, z: 1.0},

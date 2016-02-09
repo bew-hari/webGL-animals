@@ -166,7 +166,7 @@ function main() {
                 gl.drawingBufferWidth/2,        // viewport width, height.
                 gl.drawingBufferHeight/2);
 
-    matrices.viewMatrix.setLookAt(0, 0, 3, 0, 0, 0, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(0, 0, -3, 0, 0, 0, 0, 1, 0);
     matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
 
     draw(gl, canvas, matrices);
@@ -179,7 +179,7 @@ function main() {
                 gl.drawingBufferWidth/2,        // viewport width, height.
                 gl.drawingBufferHeight/2);
 
-    matrices.viewMatrix.setLookAt(0, 0, 3, 0, 0, 0, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(0, 0, -3, 0, 0, 0, 0, 1, 0);
     //matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
     matrices.projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 5.0);
     
@@ -281,6 +281,12 @@ function drawEnvironment(gl, matrices) {
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   
+  // translate view matrix based on user input
+  viewMatrix.translate(
+    state.overallHorizontalOffset, 
+    state.overallVerticalOffset,
+    0.0);
+
   // modify view matrix with mouse drag quaternion-based rotation
   viewMatrix.concat(state.orientation.mat);
 
@@ -322,7 +328,7 @@ function drawModels(gl, matrices) {
 
   // draw eagle if not hidden by user
   if (state.showEagle) {
-    modelMatrix.translate(0.0, 0.5, 0.0);
+    modelMatrix.translate(0.0, 0.3, 0.0);
     drawEagle(gl, data.eagle, state.eagle, modelMatrix, u_ModelMatrix);
   }
 
@@ -333,7 +339,7 @@ function drawModels(gl, matrices) {
   if (state.showFox) {
     drawFox(gl, data.fox, state.fox, modelMatrix, u_ModelMatrix);
   }
-*/
+//*/
 
 }
 
@@ -796,7 +802,7 @@ function updateOrientation(orientation, xdrag, ydrag) {
 
   var dist = Math.sqrt(xdrag*xdrag + ydrag*ydrag);
 
-  newQuat.setFromAxisAngle(-ydrag + 0.0001, xdrag + 0.0001, 0.0, dist*150.0);
+  newQuat.setFromAxisAngle(ydrag + 0.0001, xdrag + 0.0001, 0.0, dist*150.0);
 
   // apply new rotation
   tmpQuat.multiply(newQuat, orientation.quat);
