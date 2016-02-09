@@ -13,12 +13,10 @@ function Environment() {
   
   // save all properties
   this.numElements = numElements;
+  this.startVertexOffset = 0;
+  this.numVertices = numElements / FLOATS_PER_VERTEX;
   this.vertices = vertices;
   this.ground = ground;
-
-  this.adjustStartVertices = function(offset) {
-    this.ground.startVertex += offset;
-  };
 }
 
 function makeGroundVertices() {

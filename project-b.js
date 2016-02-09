@@ -34,8 +34,8 @@ var OVERALL_ANGLE_STEP = 45.0,
 
 var globals = {};
 
-// animation rates
-function initRates() {
+function initGlobals() {
+  // animation rates
   globals.rates = {
     overallHorizontalStep: 0,
     overallVerticalStep: 0,
@@ -43,10 +43,8 @@ function initRates() {
     foxUpperLegAngleStep: FOX_LEG_ANGLE_STEP,
     foxLowerLegAngleStep: FOX_LEG_ANGLE_STEP,
   };
-}
 
-// animation state
-function initState() {
+  // animation states
   globals.state = {
     isPaused: false,
     showEagle: true,
@@ -67,10 +65,8 @@ function initState() {
       pawAngle: 0.0,
     },
   };
-}
 
-// mouse data
-function initMouse() {
+  // mouse data
   globals.mouse = {
     isDragging: false,
     click: {
@@ -86,13 +82,10 @@ function initMouse() {
       y: 0,
     },
   };
-};
-
+}
 
 function main() {
-  initState();
-  initRates();
-  initMouse();
+  initGlobals();
 
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');
@@ -106,7 +99,7 @@ function main() {
 
   // Initialize shaders
   if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-    console.log('Failed to intialize shaders.');
+    console.log('Failed to initialize shaders.');
     return;
   }
 
@@ -293,7 +286,7 @@ function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    eagle.body.startVertex,
+    eagle.startVertexOffset + eagle.body.startVertexOffset,
     eagle.body.numVertices);
 
   // tail
@@ -303,7 +296,7 @@ function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    eagle.tail.startVertex,
+    eagle.startVertexOffset + eagle.tail.startVertexOffset,
     eagle.tail.numVertices);
 
   // WINGS
@@ -330,7 +323,7 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    eagle.upperWing.startVertex,
+    eagle.startVertexOffset + eagle.upperWing.startVertexOffset,
     eagle.upperWing.numVertices);
 
   // middle wing
@@ -341,7 +334,7 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    eagle.middleWing.startVertex,
+    eagle.startVertexOffset + eagle.middleWing.startVertexOffset,
     eagle.middleWing.numVertices);
   
   // lower wing
@@ -352,7 +345,7 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    eagle.lowerWing.startVertex,
+    eagle.startVertexOffset + eagle.lowerWing.startVertexOffset,
     eagle.lowerWing.numVertices);
 }
 
@@ -371,7 +364,7 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.upperBody.startVertex,
+    fox.startVertexOffset + fox.upperBody.startVertexOffset,
     fox.upperBody.numVertices);
 
   // draw the ears
@@ -406,7 +399,7 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.lowerBody.startVertex,
+    fox.startVertexOffset + fox.lowerBody.startVertexOffset,
     fox.lowerBody.numVertices);
 
   // legs
@@ -437,7 +430,7 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.upperTail.startVertex,
+    fox.startVertexOffset + fox.upperTail.startVertexOffset,
     fox.upperTail.numVertices);
 
   // middle
@@ -447,7 +440,7 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.middleTail.startVertex,
+    fox.startVertexOffset + fox.middleTail.startVertexOffset,
     fox.middleTail.numVertices);
 
   // lower
@@ -457,7 +450,7 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.lowerTail.startVertex,
+    fox.startVertexOffset + fox.lowerTail.startVertexOffset,
     fox.lowerTail.numVertices);
 }
 
@@ -472,7 +465,7 @@ function drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.ear.startVertex,
+    fox.startVertexOffset + fox.ear.startVertexOffset,
     fox.ear.numVertices);
 }
 
@@ -488,7 +481,7 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.upperLeg.startVertex,
+    fox.startVertexOffset + fox.upperLeg.startVertexOffset,
     fox.upperLeg.numVertices);
 
   // lower
@@ -499,7 +492,7 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.lowerLeg.startVertex,
+    fox.startVertexOffset + fox.lowerLeg.startVertexOffset,
     fox.lowerLeg.numVertices);
 
   // paw
@@ -510,7 +503,7 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.paw.startVertex,
+    fox.startVertexOffset + fox.paw.startVertexOffset,
     fox.paw.numVertices);
 }
 
@@ -526,7 +519,7 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.upperLeg.startVertex,
+    fox.startVertexOffset + fox.upperLeg.startVertexOffset,
     fox.upperLeg.numVertices);
 
   // lower
@@ -537,7 +530,7 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.lowerLeg.startVertex,
+    fox.startVertexOffset + fox.lowerLeg.startVertexOffset,
     fox.lowerLeg.numVertices);
 
   // paw
@@ -548,7 +541,7 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    fox.paw.startVertex,
+    fox.startVertexOffset + fox.paw.startVertexOffset,
     fox.paw.numVertices);
 }
 
@@ -613,15 +606,7 @@ function animate(gl, buffer) {
 function play() { state.isPaused = false; }
 function pause() { state.isPaused = true; }
 function reset() {
-  // reset animation state
-  initState();
-
-  // reset animation rates
-  initRates();
-
-  // reset mouse data
-  mouse.drag.x = 0;
-  mouse.drag.y = 0;
+  initGlobals();
 
   // reset HTML elements
   document.getElementById('toggle-eagle').checked = true;
@@ -629,6 +614,8 @@ function reset() {
 }
 
 function toggleEagle(cb) {
+  var state = globals.state;
+
   if (cb.checked) 
     state.showEagle = true;
   else
@@ -636,6 +623,8 @@ function toggleEagle(cb) {
 }
 
 function toggleFox(cb) {
+  var state = globals.state;
+
   if (cb.checked) 
     state.showFox = true;
   else

@@ -4,27 +4,27 @@ function Eagle() {
       wingVertices = makeEagleWing();
 
   var body = {
-    startVertex: 0,
+    startVertexOffset: 0,
     numVertices: bodyVertices.length / FLOATS_PER_VERTEX,
   };
 
   var tail = {
-    startVertex: body.numVertices,
+    startVertexOffset: body.numVertices,
     numVertices: tailVertices.length / FLOATS_PER_VERTEX,
   };
 
   var upperWing = {
-    startVertex: tail.startVertex + tail.numVertices,
+    startVertexOffset: tail.startVertexOffset + tail.numVertices,
     numVertices: wingVertices.upper.length / FLOATS_PER_VERTEX,
   };
 
   var middleWing = {
-    startVertex: upperWing.startVertex + upperWing.numVertices,
+    startVertexOffset: upperWing.startVertexOffset + upperWing.numVertices,
     numVertices: wingVertices.middle.length / FLOATS_PER_VERTEX,
   };
 
   var lowerWing = {
-    startVertex: middleWing.startVertex + middleWing.numVertices,
+    startVertexOffset: middleWing.startVertexOffset + middleWing.numVertices,
     numVertices: wingVertices.lower.length / FLOATS_PER_VERTEX,
   };
   
@@ -38,27 +38,21 @@ function Eagle() {
   var vertices = new Float32Array(numElements);
 
   vertices.set(bodyVertices, 0);
-  vertices.set(tailVertices, tail.startVertex*FLOATS_PER_VERTEX);
-  vertices.set(wingVertices.upper, upperWing.startVertex*FLOATS_PER_VERTEX);
-  vertices.set(wingVertices.middle, middleWing.startVertex*FLOATS_PER_VERTEX);
-  vertices.set(wingVertices.lower, lowerWing.startVertex*FLOATS_PER_VERTEX);
+  vertices.set(tailVertices, tail.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(wingVertices.upper, upperWing.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(wingVertices.middle, middleWing.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(wingVertices.lower, lowerWing.startVertexOffset*FLOATS_PER_VERTEX);
 
   // save all properties
   this.numElements = numElements;
+  this.startVertexOffset = 0;
+  this.numVertices = numElements / FLOATS_PER_VERTEX;
   this.vertices = vertices;
   this.body = body;
   this.tail = tail;
   this.upperWing = upperWing;
   this.middleWing = middleWing;
   this.lowerWing = lowerWing;
-
-  this.adjustStartVertices = function(offset) {
-    this.body.startVertex += offset;
-    this.tail.startVertex += offset;
-    this.upperWing.startVertex += offset;
-    this.middleWing.startVertex += offset;
-    this.lowerWing.startVertex += offset;
-  };
 }
 
 function makeEagleBody() {

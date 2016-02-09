@@ -6,21 +6,17 @@ function VerticesData() {
   var numElements = environment.numElements + eagle.numElements + fox.numElements;
   var vertices = new Float32Array(numElements);
 
+  eagle.startVertexOffset = environment.numVertices;
+  fox.startVertexOffset = eagle.startVertexOffset + eagle.numVertices;
+
   // copy vertices and remove unnecessary older copy
-  vertices.set(environment.vertices, 0);
-  vertices.set(eagle.vertices, environment.numElements);
-  vertices.set(fox.vertices, environment.numElements+eagle.numElements);
+  vertices.set(environment.vertices, environment.startVertexOffset);
+  vertices.set(eagle.vertices, eagle.startVertexOffset * FLOATS_PER_VERTEX);
+  vertices.set(fox.vertices, fox.startVertexOffset * FLOATS_PER_VERTEX);
   
   delete environment.vertices;
   delete eagle.vertices;
   delete fox.vertices;
-
-  // adjust start vertices
-  var startVertex = environment.numElements / FLOATS_PER_VERTEX;
-  eagle.adjustStartVertices(startVertex);
-
-  startVertex += eagle.numElements / FLOATS_PER_VERTEX;
-  fox.adjustStartVertices(startVertex);
 
   // save properties
   this.environment = environment;

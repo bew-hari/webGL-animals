@@ -4,47 +4,47 @@ function Fox() {
       legVertices = makeFoxLeg();
 
   var upperBody = {
-    startVertex: 0,
+    startVertexOffset: 0,
     numVertices: bodyVertices.upper.length / FLOATS_PER_VERTEX,
   };
 
   var lowerBody = {
-    startVertex: upperBody.numVertices,
+    startVertexOffset: upperBody.numVertices,
     numVertices: bodyVertices.lower.length / FLOATS_PER_VERTEX,
   };
 
   var ear = {
-    startVertex: lowerBody.startVertex + lowerBody.numVertices,
+    startVertexOffset: lowerBody.startVertexOffset + lowerBody.numVertices,
     numVertices: bodyVertices.ear.length / FLOATS_PER_VERTEX,
   };
 
   var upperTail = {
-    startVertex: ear.startVertex + ear.numVertices,
+    startVertexOffset: ear.startVertexOffset + ear.numVertices,
     numVertices: tailVertices.upper.length / FLOATS_PER_VERTEX,
   };
 
   var middleTail = {
-    startVertex: upperTail.startVertex + upperTail.numVertices,
+    startVertexOffset: upperTail.startVertexOffset + upperTail.numVertices,
     numVertices: tailVertices.middle.length / FLOATS_PER_VERTEX,
   };
 
   var lowerTail = {
-    startVertex: middleTail.startVertex + middleTail.numVertices,
+    startVertexOffset: middleTail.startVertexOffset + middleTail.numVertices,
     numVertices: tailVertices.lower.length / FLOATS_PER_VERTEX,
   };
 
   var upperLeg = {
-    startVertex: lowerTail.startVertex + lowerTail.numVertices,
+    startVertexOffset: lowerTail.startVertexOffset + lowerTail.numVertices,
     numVertices: legVertices.upper.length / FLOATS_PER_VERTEX,
   };
 
   var lowerLeg = {
-    startVertex: upperLeg.startVertex + upperLeg.numVertices,
+    startVertexOffset: upperLeg.startVertexOffset + upperLeg.numVertices,
     numVertices: legVertices.lower.length / FLOATS_PER_VERTEX,
   };
 
   var paw = {
-    startVertex: lowerLeg.startVertex + lowerLeg.numVertices,
+    startVertexOffset: lowerLeg.startVertexOffset + lowerLeg.numVertices,
     numVertices: legVertices.paw.length / FLOATS_PER_VERTEX,
   };
 
@@ -62,19 +62,21 @@ function Fox() {
   var vertices = new Float32Array(numElements);
 
   vertices.set(bodyVertices.upper, 0);
-  vertices.set(bodyVertices.lower, lowerBody.startVertex*FLOATS_PER_VERTEX);
-  vertices.set(bodyVertices.ear, ear.startVertex*FLOATS_PER_VERTEX);
+  vertices.set(bodyVertices.lower, lowerBody.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(bodyVertices.ear, ear.startVertexOffset*FLOATS_PER_VERTEX);
 
-  vertices.set(tailVertices.upper, upperTail.startVertex*FLOATS_PER_VERTEX);
-  vertices.set(tailVertices.middle, middleTail.startVertex*FLOATS_PER_VERTEX);
-  vertices.set(tailVertices.lower, lowerTail.startVertex*FLOATS_PER_VERTEX);
+  vertices.set(tailVertices.upper, upperTail.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(tailVertices.middle, middleTail.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(tailVertices.lower, lowerTail.startVertexOffset*FLOATS_PER_VERTEX);
 
-  vertices.set(legVertices.upper, upperLeg.startVertex*FLOATS_PER_VERTEX);
-  vertices.set(legVertices.lower, lowerLeg.startVertex*FLOATS_PER_VERTEX);
-  vertices.set(legVertices.paw, paw.startVertex*FLOATS_PER_VERTEX);
+  vertices.set(legVertices.upper, upperLeg.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(legVertices.lower, lowerLeg.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(legVertices.paw, paw.startVertexOffset*FLOATS_PER_VERTEX);
 
   // save all properties
   this.numElements = numElements;
+  this.startVertexOffsetOffset = 0;
+  this.numVertices = numElements / FLOATS_PER_VERTEX;
   this.vertices = vertices;
   this.upperBody = upperBody;
   this.lowerBody = lowerBody;
@@ -85,18 +87,6 @@ function Fox() {
   this.upperLeg = upperLeg;
   this.lowerLeg = lowerLeg;
   this.paw = paw;
-
-  this.adjustStartVertices = function(offset) {
-    this.upperBody.startVertex += offset;
-    this.lowerBody.startVertex += offset;
-    this.ear.startVertex += offset;
-    this.upperTail.startVertex += offset;
-    this.middleTail.startVertex += offset;
-    this.lowerTail.startVertex += offset;
-    this.upperLeg.startVertex += offset;
-    this.lowerLeg.startVertex += offset;
-    this.paw.startVertex += offset;
-  };
 }
 
 function makeFoxBody() {
