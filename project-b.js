@@ -140,30 +140,47 @@ function main() {
     return;
   }
 
-  // Create matrices for mvp
-  var modelMatrix = new Matrix4();
-  var viewMatrix = new Matrix4();
-  var projMatrix = new Matrix4();
-  
-  // Specify viewports
-  gl.viewport(0,                              // Viewport lower-left corner
-              0,                              // (x,y) location(in pixels)
-              gl.drawingBufferWidth/2,        // viewport width, height.
-              gl.drawingBufferHeight/2);
-  viewMatrix.setLookAt(0, 0, 3, 0, 0, -100, 0, 1, 0);
-  //viewMatrix.rotate(-90.0, 1,0,0);          // new one has +z pointing upwards
-  projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
-  
-  // Pass the model, view, and projection matrix to the uniform variable respectively
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
-  gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
+  var matrices = {
+    u_ModelMatrix: u_ModelMatrix,
+    modelMatrix: new Matrix4(),
+
+    u_ViewMatrix: u_ViewMatrix,
+    viewMatrix: new Matrix4(),
+
+    u_ProjMatrix: u_ProjMatrix,
+    projMatrix: new Matrix4(),
+  };
 
   // Start drawing
   var tick = function() {
     animate(gl, buffer);
+    
+    // Clear <canvas>  colors AND the depth buffer
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    
+    // Lower left viewport
+    gl.viewport(0,                              // Viewport lower-left corner
+                0,                              // (x,y) location(in pixels)
+                gl.drawingBufferWidth/2,        // viewport width, height.
+                gl.drawingBufferHeight/2);
 
-    draw(gl, modelMatrix, u_ModelMatrix);
+    matrices.viewMatrix.setLookAt(0, 0, 3, 0, 0, 0, 0, 1, 0);
+    matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
+
+    draw(gl, canvas, matrices);
+
+    // Lower right viewport
+    gl.viewport(gl.drawingBufferWidth/2,        // Viewport lower-right corner
+                0,                              // (x,y) location(in pixels)
+                gl.drawingBufferWidth/2,        // viewport width, height.
+                gl.drawingBufferHeight/2);
+
+    matrices.viewMatrix.setLookAt(0, 0, 3, 0, 0, 0, 0, 1, 0);
+    //matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
+    matrices.projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 5.0);
+    
+    draw(gl, canvas, matrices);
+    
     
     // request that the browser calls tick
     requestId = requestAnimationFrame(tick, canvas);
@@ -225,19 +242,60 @@ function initVertexBuffers(gl) {
   return vertexBuffer;
 }
 
-function draw(gl, modelMatrix, u_ModelMatrix) {
+function draw(gl, canvas, matrices) {
+  
+  var data = globals.data;
+  var state = globals.state;
+
+  var u_ModelMatrix = matrices.u_ModelMatrix;
+  var modelMatrix = matrices.modelMatrix;
+  var u_ViewMatrix = matrices.u_ViewMatrix;
+  var viewMatrix = matrices.viewMatrix;
+  var u_ProjMatrix = matrices.u_ProjMatrix;
+  var projMatrix = matrices.projMatrix;
+
+  // Pass in the projection matrix
+  gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
+
+  // Pass in unaltered view matrix (+y is up)
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+
+  // Draw the models
+  drawModels(gl, matrices);
+
+  // Now reset the model matrix and set up the view matrix for the environment
+  modelMatrix.setTranslate(0.0, 0.0, 0.0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  
+  // modify view matrix with mouse drag quaternion-based rotation
+  viewMatrix.concat(state.orientation.mat);
+
+  // rotate view matrix (+z is up)
+  viewMatrix.rotate(-90.0, 1, 0, 0);
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+
+  drawEnvironment(gl, data.environment);
+}
+
+function drawEnvironment(gl, environment) {
+  gl.drawArrays(gl.LINES,
+      environment.startVertexOffset + environment.ground.startVertexOffset,
+      environment.ground.numVertices);
+}
+
+function drawModels(gl, matrices) {
   var data = globals.data;
   var state = globals.state;
   var mouse = globals.mouse;
 
-  // Clear <canvas>  colors AND the depth buffer
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  var u_ModelMatrix = matrices.u_ModelMatrix;
+  var modelMatrix = matrices.modelMatrix;
 
-  // set the location matrix
+  // init the model matrix
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
-  
+
   // convert to left-handed to match WebGL display canvas
-  modelMatrix.scale(1, 1, -1);
+  //modelMatrix.scale(1, 1, -1);
 
   // translate based on user input
   modelMatrix.translate(
@@ -245,13 +303,7 @@ function draw(gl, modelMatrix, u_ModelMatrix) {
     state.overallVerticalOffset,
     0.0);
 
-  /*/ mouse drag rotation
-  var dist = Math.sqrt(mouse.drag.x*mouse.drag.x + mouse.drag.y*mouse.drag.y);
-  modelMatrix.rotate(
-    dist*120.0,
-    -mouse.drag.y+0.0001,
-    -mouse.drag.x+0.0001, 0.0
-  );*/
+  // mouse drag quaternion-based rotation
   modelMatrix.concat(state.orientation.mat);
 
   pushMatrix(modelMatrix);
@@ -264,7 +316,7 @@ function draw(gl, modelMatrix, u_ModelMatrix) {
 
   modelMatrix = popMatrix();
 
-  // draw eagle if not hidden by user
+  // draw fox if not hidden by user
   if (state.showFox) {
     drawFox(gl, data.fox, state.fox, modelMatrix, u_ModelMatrix);
   }
@@ -420,7 +472,6 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // TAIL
   //=========================================================================//
   modelMatrix = popMatrix();
-  pushMatrix(modelMatrix);
 
   modelMatrix.translate(0.0, 0.05, -0.5);
   
@@ -724,31 +775,6 @@ function myMouseUp(e, gl, canvas) {
   }
 }
 
-window.onkeydown = function(e) {
-  var rates = globals.rates;
-
-  if (e.keyCode == 37) // left arrow
-    rates.overallHorizontalStep = OVERALL_TRANSLATE_STEP;
-  else if (e.keyCode == 39) // right arrow
-    rates.overallHorizontalStep = -OVERALL_TRANSLATE_STEP;
-  else if (e.keyCode == 38) // up arrow
-    rates.overallVerticalStep = OVERALL_TRANSLATE_STEP;
-  else if (e.keyCode == 40) // down arrow
-    rates.overallVerticalStep = -OVERALL_TRANSLATE_STEP;
-};
-
-window.onkeyup = function(e) {
-  var rates = globals.rate;
-  var state = globals.state;
-
-  if ((e.keyCode == 37) || (e.keyCode == 39)) 
-    rates.overallHorizontalStep = 0;
-  else if ((e.keyCode == 38) || (e.keyCode == 40)) 
-    rates.overallVerticalStep = 0;
-  else if (e.keyCode == 32) // spacebar
-    state.isPaused = !state.isPaused;
-};
-
 function updateOrientation(orientation, xdrag, ydrag) {
   var newQuat = new Quaternion(0, 0, 0, 1);
   var tmpQuat = new Quaternion(0, 0, 0, 1);
@@ -767,3 +793,29 @@ function updateOrientation(orientation, xdrag, ydrag) {
   // convert quaternion to matrix
   orientation.mat.setFromQuat(tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w);
 }
+
+// keyboard listeners
+window.onkeydown = function(e) {
+  var rates = globals.rates;
+
+  if (e.keyCode == 37) // left arrow
+    rates.overallHorizontalStep = OVERALL_TRANSLATE_STEP;
+  else if (e.keyCode == 39) // right arrow
+    rates.overallHorizontalStep = -OVERALL_TRANSLATE_STEP;
+  else if (e.keyCode == 38) // up arrow
+    rates.overallVerticalStep = OVERALL_TRANSLATE_STEP;
+  else if (e.keyCode == 40) // down arrow
+    rates.overallVerticalStep = -OVERALL_TRANSLATE_STEP;
+};
+
+window.onkeyup = function(e) {
+  var rates = globals.rates;
+  var state = globals.state;
+
+  if ((e.keyCode == 37) || (e.keyCode == 39)) 
+    rates.overallHorizontalStep = 0;
+  else if ((e.keyCode == 38) || (e.keyCode == 40)) 
+    rates.overallVerticalStep = 0;
+  else if (e.keyCode == 32) // spacebar
+    state.isPaused = !state.isPaused;
+};
