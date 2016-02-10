@@ -69,61 +69,26 @@ function makeEagleBody() {
   var vertices = new Float32Array((numCapVertices*14) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  // initialize modifications
-  var modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: -0.08, z: 1.0},
-    color: {r: 1.0, g: 0.8, b: 0.0}
-  };
-
-  var modB = {
-    scale: {x: radius.midBeak, y: radius.midBeak, z: 0.0}, 
-    translate: {x: 0.0, y: -0.02, z: 0.92},
-    color: {r: 1.0, g: 0.8, b: 0.0}
-  };
-
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, -0.08, 1.0, 1.0, 0.8, 0.0);
+  var modB = UTILS.makeModOptions(radius.midBeak, radius.midBeak, 0.0, 0.0, -0.02, 0.92, 1.0, 0.8, 0.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: radius.beakHead, y: radius.beakHead, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: 0.8},
-    color: {r: 1.0, g: 1.0, b: 1.0},
-  };
+  modA = UTILS.makeModOptions(radius.beakHead, radius.beakHead, 0.0, 0.0, 0.0, 0.8, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: radius.midHead, y: radius.midHead, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: 0.6},
-    color: {r: 0.8, g: 0.8, b: 0.8},
-  };
+  modB = UTILS.makeModOptions(radius.midHead, radius.midHead, 0.0, 0.0, 0.0, 0.6, 0.8, 0.8, 0.8);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: radius.headBody, y: radius.headBody, z: 0.0},
-    translate: {x: 0.0, y: -0.03, z: 0.4},
-    color: {r: 0.5, g: 0.4, b: 0.2},
-  };
+  modA = UTILS.makeModOptions(radius.headBody, radius.headBody, 0.0, 0.0, -0.03, 0.4, 0.5, 0.4, 0.2);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: radius.midBody, y: 0.8*radius.midBody, z: 0.0},
-    translate: {x: 0.0, y: -0.05, z: 0.0},
-    color: {r: 0.5, g: 0.4, b: 0.2},
-  };
+  modB = UTILS.makeModOptions(radius.midBody, 0.8*radius.midBody, 0.0, 0.0, -0.05, 0.0, 0.5, 0.4, 0.2);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: radius.endBody, y: 0.5*radius.endBody, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: -0.5},
-    color: {r: 0.4, g: 0.3, b: 0.1},
-  };
+  modA = UTILS.makeModOptions(radius.endBody, 0.5*radius.endBody, 0.0, 0.0, 0.0, -0.5, 0.4, 0.3, 0.1);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: 0.0, y: 0.0, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: -0.5},
-    color: {r: 0.5, g: 0.4, b: 0.2},
-  };
+  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.5, 0.5, 0.4, 0.2);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
   return vertices;
@@ -134,37 +99,17 @@ function makeEagleTail() {
   var vertices = new Float32Array((numCapVertices*8) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.0},
-    color: {r: 0.4, g: 0.3, b: 0.1},
-  };
-  modB = {
-    scale: {x: 0.1, y: 0.05, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: 0.0},
-    color: {r: 0.4, g: 0.3, b: 0.1},
-  };
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.3, 0.1);
+  var modB = UTILS.makeModOptions(0.1, 0.05, 0.0, 0.0, 0.0, 0.0, 0.4, 0.3, 0.1);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.4, y: 0.03, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: -0.25},
-    color: {r: 0.5, g: 0.4, b: 0.2},
-  };
+  modA = UTILS.makeModOptions(0.4, 0.03, 0.0, 0.0, 0.0, -0.25, 0.5, 0.4, 0.2);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: 0.8, y: 0.02, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: -0.6},
-    color: {r: 0.8, g: 0.8, b: 0.8},
-  };
+  modB = UTILS.makeModOptions(0.8, 0.02, 0.0, 0.0, 0.0, -0.6, 0.8, 0.8, 0.8);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: -0.65},
-    color: {r: 1.0, g: 1.0, b: 1.0},
-  };
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.65, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
   return vertices;

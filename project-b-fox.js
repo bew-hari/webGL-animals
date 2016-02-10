@@ -106,89 +106,42 @@ function makeFoxBody() {
   var upperVertices = new Float32Array((numCapVertices*16) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  // initialize modification objects
-  var modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.1, z: 1.0},
-    color: {r: 0.0, g: 0.0, b: 0.0},
-  };
-
-  var modB = {
-    scale: {x: radius.nose, y: radius.nose, z: 0.0}, 
-    translate: {x: 0.0, y: 0.08, z: 0.93},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.1, 1.0, 0.0, 0.0, 0.0);
+  var modB = UTILS.makeModOptions(radius.nose, radius.nose, 0.0, 0.0, 0.08, 0.93, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: radius.midSnout, y: radius.midSnout, z: 0.0},
-    translate: {x: 0.0, y: 0.1, z: 0.85},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(radius.midSnout, radius.midSnout, 0.0, 0.0, 0.1, 0.85, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: 0.8*radius.snoutHead, y: radius.snoutHead, z: 0.0}, 
-    translate: {x: 0.0, y: 0.15, z: 0.78},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  modB = UTILS.makeModOptions(0.8*radius.snoutHead, radius.snoutHead, 0.0, 0.0, 0.15, 0.78, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: radius.midHead, y: radius.midHead, z: 0.0},
-    translate: {x: 0.0, y: 0.18, z: 0.7},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(radius.midHead, radius.midHead, 0.0, 0.0, 0.18, 0.7, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: 0.8*radius.headNeck, y: radius.headNeck, z: 0.0}, 
-    translate: {x: 0.0, y: 0.2, z: 0.55},
-    color: {r: 0.75, g: 0.25, b: 0.0},
-  };
+  modB = UTILS.makeModOptions(0.8*radius.headNeck, radius.headNeck, 0.0, 0.0, 0.2, 0.55, 0.75, 0.25, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.8*radius.neckBody, y: radius.neckBody, z: 0.0},
-    translate: {x: 0.0, y: 0.05, z: 0.3},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(0.8*radius.neckBody, radius.neckBody, 0.0, 0.0, 0.05, 0.3, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: 0.8*radius.midBody, y: radius.midBody, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.0},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  modB = UTILS.makeModOptions(0.8*radius.midBody, radius.midBody, 0.0, 0.0, 0.0, 0.0, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0},
-    translate: {x: 0.0, y: 0.0, z: -0.2},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modB, modA]);
 
   // make the lower body
   var lowerVertices = new Float32Array((numCapVertices*6) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  modA.translate.z = 0.2;
-  modB.translate.z = 0.0;
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.9*radius.lowerBody, y: radius.lowerBody, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: -0.5},
-    color: {r: 0.75, g: 0.25, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(radius.lowerBody, radius.lowerBody, 0.0, 0.0, 0.0, -0.5, 0.75, 0.25, 0.0);
   i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modB, modA]);
   
-  modB = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.1, z: -0.6},
-    color: {r: 0.65, g: 0.15, b: 0.0},
-  };
+  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.1, -0.6, 0.65, 0.15, 0.0);
   i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modA, modB]);
 
   // make the ear
@@ -242,68 +195,39 @@ function makeFoxTail() {
   var i = 0;
 
   // initialize modification objects
-  var modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.0},
-    color: {r: 0.7, g: 0.2, b: 0.0},
-  };
-
-  var modB = {
-    scale: {x: radius.upperTail, y: radius.upperTail, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: -0.1},
-    color: {r: 0.7, g: 0.2, b: 0.0},
-  };
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.7, 0.2, 0.0);
+  var modB = UTILS.makeModOptions(radius.upperTail, radius.upperTail, 0.0, 0.0, 0.0, -0.1, 0.7, 0.2, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: radius.midTail, y: radius.midTail, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: -0.5},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(radius.midTail, radius.midTail, 0.0, 0.0, 0.0, -0.5, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: -0.8},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
+  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.8, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
   
   // middle tail
   var middleVertices = new Float32Array((numCapVertices*6) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  modB.translate.z = -0.3;
-  modA.translate.z = 0.0;
+  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.3, 0.8, 0.3, 0.0);
+  modA = UTILS.makeModOptions(radius.midTail, radius.midTail, 0.0, 0.0, 0.0, 0.0, 0.8, 0.3, 0.0);
   i = UTILS.makeTube(numCapVertices, middleVertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: radius.lowerTail, y: radius.lowerTail, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: -0.3},
-    color: {r: 1.0, g: 1.0, b: 1.0},
-  };
+  modB = UTILS.makeModOptions(radius.lowerTail, radius.lowerTail, 0.0, 0.0, 0.0, -0.3, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, middleVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: -0.4},
-    color: {r: 1.0, g: 1.0, b: 1.0},
-  };
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.4, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, middleVertices, i, [modB, modA]);
 
   // lower tail
   var lowerVertices = new Float32Array((numCapVertices*4) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  modA.translate.z = -0.3;
-  modB.translate.z = 0.0;
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.3, 1.0, 1.0, 1.0);
+  modB = UTILS.makeModOptions(radius.lowerTail, radius.lowerTail, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: -0.2},
-    color: {r: 1.0, g: 1.0, b: 1.0},
-  };
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modB, modA]);
 
   return {
@@ -328,82 +252,45 @@ function makeFoxLeg() {
   var i = 0;
 
   // initialize modification objects
-  var modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: -0.05, z: -0.2},
-    color: {r: 0.8, g: 0.3, b: 0.0},
-  };
-
-  var modB = {
-    scale: {x: radius.shoulder, y: 0.7*radius.shoulder, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.0},
-    color: {r: 0.78, g: 0.28, b: 0.0},
-  };
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, -0.05, -0.2, 0.8, 0.3, 0.0);
+  var modB = UTILS.makeModOptions(radius.shoulder, 0.7*radius.shoulder, 0.0, 0.0, 0.0, 0.0, 0.78, 0.28, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: radius.knee, y: 0.7*radius.knee, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.5},
-    color: {r: 0.7, g: 0.2, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(radius.knee, 0.7*radius.knee, 0.0, 0.0, 0.0, 0.5, 0.7, 0.2, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.58},
-    color: {r: 0.7, g: 0.2, b: 0.0},
-  };
+  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.58, 0.7, 0.2, 0.0);
   i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
 
   // make the lower leg
   var lowerVertices = new Float32Array((numCapVertices*6) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  modA.translate.z = 0.0;
-  modB.translate.z = -0.05;
+  modA = UTILS.makeModOptions(radius.knee, 0.7*radius.knee, 0.0, 0.0, 0.0, 0.0, 0.7, 0.2, 0.0);
+  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.05, 0.7, 0.2, 0.0);
   i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: radius.ankle, y: radius.ankle, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.4},
-    color: {r: 0.3, g: 0.1, b: 0.0},
-  };
+  modB = UTILS.makeModOptions(radius.ankle, radius.ankle, 0.0, 0.0, 0.0, 0.4, 0.3, 0.1, 0.0);
   i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.45},
-    color: {r: 0.3, g: 0.1, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.45, 0.3, 0.1, 0.0);
   i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modB, modA]);
 
   // make the paw
   var pawVertices = new Float32Array((numCapVertices*8) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  modA.translate.z = -0.05;
-  modB.translate.z = 0.0;
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, -0.05, 0.3, 0.1, 0.0);
+  modB = UTILS.makeModOptions(radius.ankle, radius.ankle, 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.0);
   i = UTILS.makeTube(numCapVertices, pawVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: radius.anklePaw, y: 0.7*radius.anklePaw, z: 0.0}, 
-    translate: {x: -0.05, y: 0.0, z: 0.05},
-    color: {r: 0.3, g: 0.1, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(radius.anklePaw, 0.7*radius.anklePaw, 0.0, -0.05, 0.0, 0.05, 0.3, 0.1, 0.0);
   i = UTILS.makeTube(numCapVertices, pawVertices, i, [modB, modA]);
 
-  modB = {
-    scale: {x: radius.paw, y: 0.7*radius.paw, z: 0.0}, 
-    translate: {x: -0.05, y: 0.0, z: 0.1},
-    color: {r: 0.3, g: 0.1, b: 0.0},
-  };
+  modB = UTILS.makeModOptions(radius.paw, 0.7*radius.paw, 0.0, -0.05, 0.0, 0.1, 0.3, 0.1, 0.0);
   i = UTILS.makeTube(numCapVertices, pawVertices, i, [modA, modB]);
 
-  modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: 0.0, z: 0.1},
-    color: {r: 0.4, g: 0.15, b: 0.0},
-  };
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.4, 0.15, 0.0);
   i = UTILS.makeTube(numCapVertices, pawVertices, i, [modB, modA]);
 
   return {

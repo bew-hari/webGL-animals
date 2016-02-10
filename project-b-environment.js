@@ -86,17 +86,4 @@ function makeTreeVertices() {
 
   var vertices = new Float32Array((numCapVertices*18) * FLOATS_PER_VERTEX);
   var i = 0;
-
-  // initialize modifications
-  var modA = {
-    scale: {x: 0.0, y: 0.0, z: 0.0}, 
-    translate: {x: 0.0, y: -0.08, z: 1.0},
-    color: {r: 1.0, g: 0.8, b: 0.0}
-  };
-
-  var modB = {
-    scale: {x: radius.midBeak, y: radius.midBeak, z: 0.0}, 
-    translate: {x: 0.0, y: -0.02, z: 0.92},
-    color: {r: 1.0, g: 0.8, b: 0.0}
-  };
 }
