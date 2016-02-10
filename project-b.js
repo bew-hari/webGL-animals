@@ -27,8 +27,7 @@ var FSHADER_SOURCE =
 var FLOATS_PER_VERTEX = 7;
 var FSIZE = Float32Array.BYTES_PER_ELEMENT;
 
-var OVERALL_ANGLE_STEP = 45.0,
-    OVERALL_TRANSLATE_STEP = 0.5,
+var EYE_STEP = 0.5,
     EAGLE_WING_ANGLE_STEP = 100.0,
     FOX_LEG_ANGLE_STEP = 150.0;
 
@@ -37,8 +36,11 @@ var globals = {};
 function initGlobals() {
   // animation rates
   globals.rates = {
-    overallHorizontalStep: 0,
-    overallVerticalStep: 0,
+    view: {
+      eyeStep: { x: 0, y: 0, z: 0, },
+      lookAtStep: { x: 0, y: 0, z: 0, },
+    },
+    
     eagleWingAngleStep: EAGLE_WING_ANGLE_STEP,
     foxUpperLegAngleStep: FOX_LEG_ANGLE_STEP,
     foxLowerLegAngleStep: FOX_LEG_ANGLE_STEP,
@@ -49,8 +51,12 @@ function initGlobals() {
     isPaused: false,
     showEagle: true,
     showFox: true,
-    overallHorizontalOffset: 0.0,
-    overallVerticalOffset: 0.0,
+    
+    view: {
+      eye: { x: 0.0, y: 0.0, z: 5.0, },
+      lookAt: { x: 0.0, y: 0.0, z: 0.0, },
+    },
+    
     orientation: {
       quat: new Quaternion(0, 0, 0, 1),
       mat: new Matrix4(),
@@ -69,7 +75,7 @@ function initGlobals() {
         50, 
         [0.9, 1.1],
         [0.0, 360.0],
-        [0, 10], [0, 20], [0, 0]
+        [-5, 5], [0, 20], [0, 0]
       ),
     }
   };
@@ -166,7 +172,7 @@ function main() {
     // Clear <canvas>  colors AND the depth buffer
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
-
+    var eye = globals.state.view.eye;
     // Lower left viewport
     // ----------------------------------------------------------------------
     gl.viewport(0,                              // Viewport lower-left corner
@@ -174,7 +180,7 @@ function main() {
                 gl.drawingBufferWidth/2,        // viewport width, height.
                 gl.drawingBufferHeight/2);
 
-    matrices.viewMatrix.setLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, 0, 0, 0, 0, 1, 0);
     matrices.projMatrix.setPerspective(40, canvas.width/canvas.height, 1, 100);
 
     draw(gl, canvas, matrices);
@@ -187,7 +193,7 @@ function main() {
                 gl.drawingBufferWidth/2,        // viewport width, height.
                 gl.drawingBufferHeight/2);
 
-    matrices.viewMatrix.setLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, 0, 0, 0, 0, 1, 0);
     //matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
     matrices.projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 2.0, 20.0);
     
@@ -288,12 +294,6 @@ function drawEnvironment(gl, matrices) {
   // Reset the model matrix and set up the view matrix for the environment
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-  
-  // translate view matrix based on user input
-  viewMatrix.translate(
-    state.overallHorizontalOffset, 
-    state.overallVerticalOffset,
-    0.0);
 
   // modify view matrix with mouse drag quaternion-based rotation
   viewMatrix.concat(state.orientation.mat);
@@ -359,12 +359,6 @@ function drawAnimals(gl, matrices) {
 
   // convert to left-handed to match WebGL display canvas
   //modelMatrix.scale(1, 1, -1);
-
-  // translate based on user input
-  modelMatrix.translate(
-    state.overallHorizontalOffset, 
-    state.overallVerticalOffset,
-    0.0);
 
   // mouse drag quaternion-based rotation
   modelMatrix.concat(state.orientation.mat);
@@ -665,7 +659,7 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 // Last time that this function was called
 var g_last = Date.now();
 
-function animate(gl, buffer) {
+function animate() {
   var state = globals.state;
   var rates = globals.rates;
 
@@ -678,9 +672,10 @@ function animate(gl, buffer) {
   if (state.isPaused)
     elapsed = 0;
 
-  // overall translation
-  state.overallHorizontalOffset += (rates.overallHorizontalStep * elapsed) / 1000.0;
-  state.overallVerticalOffset += (rates.overallVerticalStep * elapsed) / 1000.0;
+  // eye translation
+  state.view.eye.x += (rates.view.eyeStep.x * elapsed) / 1000.0;
+  state.view.eye.y += (rates.view.eyeStep.y * elapsed) / 1000.0;
+  state.view.eye.z += (rates.view.eyeStep.z * elapsed) / 1000.0;
 
   // eagle wing angle
   var wingAngle = state.eagle.wingAngle;
@@ -865,13 +860,13 @@ window.onkeydown = function(e) {
   var rates = globals.rates;
 
   if (e.keyCode == 37) // left arrow
-    rates.overallHorizontalStep = OVERALL_TRANSLATE_STEP;
+    rates.view.eyeStep.x = -EYE_STEP;
   else if (e.keyCode == 39) // right arrow
-    rates.overallHorizontalStep = -OVERALL_TRANSLATE_STEP;
+    rates.view.eyeStep.x = +EYE_STEP;
   else if (e.keyCode == 38) // up arrow
-    rates.overallVerticalStep = OVERALL_TRANSLATE_STEP;
+    rates.view.eyeStep.y = EYE_STEP;
   else if (e.keyCode == 40) // down arrow
-    rates.overallVerticalStep = -OVERALL_TRANSLATE_STEP;
+    rates.view.eyeStep.y = -EYE_STEP;
 };
 
 window.onkeyup = function(e) {
@@ -879,9 +874,9 @@ window.onkeyup = function(e) {
   var state = globals.state;
 
   if ((e.keyCode == 37) || (e.keyCode == 39)) 
-    rates.overallHorizontalStep = 0;
+    rates.view.eyeStep.x = 0;
   else if ((e.keyCode == 38) || (e.keyCode == 40)) 
-    rates.overallVerticalStep = 0;
+    rates.view.eyeStep.y = 0;
   else if (e.keyCode == 32) // spacebar
     state.isPaused = !state.isPaused;
 };

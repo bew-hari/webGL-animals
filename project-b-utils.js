@@ -90,7 +90,6 @@ var UTILS = {
 
       size--;
     }
-    console.log(transforms);
     return transforms;
   },
 
