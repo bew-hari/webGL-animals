@@ -64,6 +64,14 @@ function initGlobals() {
       lowerLegAngle: 30.0,
       pawAngle: 0.0,
     },
+    environment: {
+      treeTransforms: UTILS.makeRandomTransforms(
+        50, 
+        [0.9, 1.1],
+        [0.0, 360.0],
+        [0, 10], [0, 20], [0, 0]
+      ),
+    }
   };
 
   // mouse data
@@ -166,7 +174,7 @@ function main() {
                 gl.drawingBufferWidth/2,        // viewport width, height.
                 gl.drawingBufferHeight/2);
 
-    matrices.viewMatrix.setLookAt(0, 0, -3, 0, 0, 0, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
     matrices.projMatrix.setPerspective(40, canvas.width/canvas.height, 1, 100);
 
     draw(gl, canvas, matrices);
@@ -179,9 +187,9 @@ function main() {
                 gl.drawingBufferWidth/2,        // viewport width, height.
                 gl.drawingBufferHeight/2);
 
-    matrices.viewMatrix.setLookAt(0, 0, -3, 0, 0, 0, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
     //matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
-    matrices.projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 5.0);
+    matrices.projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 2.0, 20.0);
     
     draw(gl, canvas, matrices);
     
@@ -262,14 +270,14 @@ function draw(gl, canvas, matrices) {
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
   // Draw the models
-  drawModels(gl, matrices);
+  drawAnimals(gl, matrices);
 
   // Draw the environment
   drawEnvironment(gl, matrices);
 }
 
 function drawEnvironment(gl, matrices) {
-  var data = globals.data;
+  var environment = globals.data.environment;
   var state = globals.state;
 
   var u_ModelMatrix = matrices.u_ModelMatrix;
@@ -295,19 +303,50 @@ function drawEnvironment(gl, matrices) {
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
   // draw the ground
-  var environment = data.environment;
   gl.drawArrays(
     gl.LINES,
     environment.startVertexOffset + environment.ground.startVertexOffset,
     environment.ground.numVertices);
 
+//*
+  // draw the trees
+  drawTrees(gl, environment, globals.state, modelMatrix, u_ModelMatrix);
+//*/
+/*
+  // draw the mountain
+  modelMatrix.setTranslate(-1.5, 3.0, 0.0);
+  modelMatrix.scale(2.0, 2.0, 2.0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
-    environment.startVertexOffset + environment.tree.startVertexOffset,
-    environment.tree.numVertices);
+    environment.startVertexOffset + environment.mountain.startVertexOffset,
+    environment.mountain.numVertices);
+//*/
 }
 
-function drawModels(gl, matrices) {
+function drawTrees(gl, environment, state, modelMatrix, u_ModelMatrix) {
+  
+  var treeTransforms = state.environment.treeTransforms;
+  var translate, angle, scale;
+
+  for (var i=0; i<treeTransforms.length; i++) {
+    translate = treeTransforms[i].translate;
+    angle = treeTransforms[i].angle;
+    scale = treeTransforms[i].scale;
+
+    modelMatrix.setTranslate(translate.x, translate.y, translate.z);
+    modelMatrix.rotate(angle, 0, 0, 1);
+    modelMatrix.scale(scale.x, scale.y, scale.z);
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+    gl.drawArrays(
+      gl.TRIANGLE_STRIP,
+      environment.startVertexOffset + environment.tree.startVertexOffset,
+      environment.tree.numVertices);  
+  }
+}
+
+function drawAnimals(gl, matrices) {
   var data = globals.data;
   var state = globals.state;
   var mouse = globals.mouse;
@@ -331,13 +370,13 @@ function drawModels(gl, matrices) {
   modelMatrix.concat(state.orientation.mat);
 
   pushMatrix(modelMatrix);
-
+/*
   // draw eagle if not hidden by user
   if (state.showEagle) {
     modelMatrix.translate(0.0, 0.3, 0.0);
     drawEagle(gl, data.eagle, state.eagle, modelMatrix, u_ModelMatrix);
   }
-
+//*/
   modelMatrix = popMatrix();
 
 /*
@@ -808,7 +847,7 @@ function updateOrientation(orientation, xdrag, ydrag) {
 
   var dist = Math.sqrt(xdrag*xdrag + ydrag*ydrag);
 
-  newQuat.setFromAxisAngle(ydrag + 0.0001, xdrag + 0.0001, 0.0, dist*150.0);
+  newQuat.setFromAxisAngle(-ydrag + 0.0001, xdrag + 0.0001, 0.0, dist*150.0);
 
   // apply new rotation
   tmpQuat.multiply(newQuat, orientation.quat);

@@ -48,15 +48,54 @@ var UTILS = {
     return i;
   },
 
-  makeModOptions: function(scaleX, scaleY, scaleZ, transX, transY, transZ, r, g, b) {
+  // returns mod object for use in makeTube
+  makeModOptions: function(scaleX, scaleY, scaleZ, rotateAngle, rotateX, rotateY, rotateZ, transX, transY, transZ, r, g, b) {
     var mat = new Matrix4();
 
     mat.setTranslate(transX, transY, transZ);
+    mat.rotate(rotateAngle, rotateX, rotateY, rotateZ);
     mat.scale(scaleX, scaleY, scaleZ);
 
     return {
       transform: mat,
       color: {r: r, g: g, b: b},
     };
+  },
+
+  // generates random modelMatrix transforms
+  makeRandomTransforms: function(size, scaleRange, rotateRange, transRangeX, transRangeY, transRangeZ) {
+    var transforms = [];
+    var mat = new Matrix4();
+    
+    var scaleX, scaleY, scaleZ,
+        angle,
+        transX, transY, transZ;
+
+    while (size > 0) {
+      scaleX = this.randomRange(scaleRange[0], scaleRange[1]);
+      scaleY = this.randomRange(scaleRange[0], scaleRange[1]);
+      scaleZ = this.randomRange(scaleRange[0], scaleRange[1]);
+
+      angle = this.randomRange(rotateRange[0], rotateRange[1]);
+
+      transX = this.randomRange(transRangeX[0], transRangeX[1]);
+      transY = this.randomRange(transRangeY[0], transRangeY[1]);
+      transZ = this.randomRange(transRangeZ[0], transRangeZ[1]);
+
+      transforms.push({
+        scale: {x: scaleX, y: scaleY, z: scaleZ},
+        angle: angle,
+        translate: {x: transX, y: transY, z: transZ},
+      });
+
+      size--;
+    }
+    console.log(transforms);
+    return transforms;
+  },
+
+  // returns random float within given range
+  randomRange: function(low, high) {
+    return Math.random() * (high - low) + low;
   },
 };
