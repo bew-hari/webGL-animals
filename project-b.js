@@ -167,7 +167,7 @@ function main() {
                 gl.drawingBufferHeight/2);
 
     matrices.viewMatrix.setLookAt(0, 0, -3, 0, 0, 0, 0, 1, 0);
-    matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
+    matrices.projMatrix.setPerspective(40, canvas.width/canvas.height, 1, 100);
 
     draw(gl, canvas, matrices);
 
@@ -296,9 +296,15 @@ function drawEnvironment(gl, matrices) {
 
   // draw the ground
   var environment = data.environment;
-  gl.drawArrays(gl.LINES,
-      environment.startVertexOffset + environment.ground.startVertexOffset,
-      environment.ground.numVertices);
+  gl.drawArrays(
+    gl.LINES,
+    environment.startVertexOffset + environment.ground.startVertexOffset,
+    environment.ground.numVertices);
+
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    environment.startVertexOffset + environment.tree.startVertexOffset,
+    environment.tree.numVertices);
 }
 
 function drawModels(gl, matrices) {
