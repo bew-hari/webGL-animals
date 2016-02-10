@@ -49,30 +49,33 @@ function initGlobals() {
   // animation states
   globals.state = {
     isPaused: false,
-    showEagle: true,
-    showFox: true,
     
     view: {
       eye: { x: 0.0, y: 0.0, z: 5.0, },
       lookAt: { x: 0.0, y: 0.0, z: 0.0, },
     },
-    
+
     orientation: {
       quat: new Quaternion(0, 0, 0, 1),
       mat: new Matrix4(),
     },
+
     eagle: {
+      show: true,
       tailAngle: -10.0,
       wingAngle: 5.0,
     },
+
     fox: {
+      show: true,
       upperLegAngle: 0.0,
       lowerLegAngle: 30.0,
       pawAngle: 0.0,
     },
+
     environment: {
       treeTransforms: UTILS.makeRandomTransforms(
-        50, 
+        1, 
         [0.9, 1.1],
         [0.0, 360.0],
         [-5, 5], [0, 20], [0, 0]
@@ -364,18 +367,20 @@ function drawAnimals(gl, matrices) {
   modelMatrix.concat(state.orientation.mat);
 
   pushMatrix(modelMatrix);
+
 /*
   // draw eagle if not hidden by user
-  if (state.showEagle) {
+  if (state.eagle.show) {
     modelMatrix.translate(0.0, 0.3, 0.0);
     drawEagle(gl, data.eagle, state.eagle, modelMatrix, u_ModelMatrix);
   }
 //*/
+
   modelMatrix = popMatrix();
 
 /*
   // draw fox if not hidden by user
-  if (state.showFox) {
+  if (state.fox.show) {
     drawFox(gl, data.fox, state.fox, modelMatrix, u_ModelMatrix);
   }
 //*/
@@ -672,10 +677,14 @@ function animate() {
   if (state.isPaused)
     elapsed = 0;
 
-  // eye translation
-  state.view.eye.x += (rates.view.eyeStep.x * elapsed) / 1000.0;
-  state.view.eye.y += (rates.view.eyeStep.y * elapsed) / 1000.0;
-  state.view.eye.z += (rates.view.eyeStep.z * elapsed) / 1000.0;
+  animateView(elapsed);
+
+  animateAnimals(elapsed);
+}
+
+function animateAnimals(elapsed) {
+  var state = globals.state;
+  var rates = globals.rates;
 
   // eagle wing angle
   var wingAngle = state.eagle.wingAngle;
@@ -714,6 +723,16 @@ function animate() {
   state.fox.lowerLegAngle = newAngle; 
 }
 
+function animateView(elapsed) {
+  var viewState = globals.state.view;
+  var viewRates = globals.rates.view;
+
+  // eye translation
+  viewState.eye.x += (viewRates.eyeStep.x * elapsed) / 1000.0;
+  viewState.eye.y += (viewRates.eyeStep.y * elapsed) / 1000.0;
+  viewState.eye.z += (viewRates.eyeStep.z * elapsed) / 1000.0;
+}
+
 // HTML elements functions
 function play() { globals.state.isPaused = false; }
 function pause() { globals.state.isPaused = true; }
@@ -726,21 +745,21 @@ function reset() {
 }
 
 function toggleEagle(cb) {
-  var state = globals.state;
+  var eagle = globals.state.eagle;
 
   if (cb.checked) 
-    state.showEagle = true;
+    eagle.show = true;
   else
-    state.showEagle = false;
+    eagle.show = false;
 }
 
 function toggleFox(cb) {
-  var state = globals.state;
+  var fox = globals.state.fox;
 
   if (cb.checked) 
-    state.showFox = true;
+    fox.show = true;
   else
-    state.showFox = false;
+    fox.show = false;
 }
 
 // mouse functions
