@@ -176,29 +176,31 @@ function main() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
     var eye = globals.state.view.eye;
-    // Lower left viewport
-    // ----------------------------------------------------------------------
-    gl.viewport(0,                              // Viewport lower-left corner
-                0,                              // (x,y) location(in pixels)
-                gl.drawingBufferWidth/2,        // viewport width, height.
-                gl.drawingBufferHeight/2);
+    var lookAt = globals.state.view.lookAt;
 
-    matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, 0, 0, 0, 0, 1, 0);
-    matrices.projMatrix.setPerspective(40, canvas.width/canvas.height, 1, 100);
+    // Left viewport
+    // ----------------------------------------------------------------------
+    gl.viewport(0,
+                0, 
+                gl.drawingBufferWidth/2, 
+                gl.drawingBufferHeight);
+
+    matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, lookAt.x, lookAt.y, lookAt.z, 0, 1, 0);
+    matrices.projMatrix.setPerspective(40, (canvas.width/2)/canvas.height, 1, 100);
 
     draw(gl, canvas, matrices);
 
 
-    // Lower right viewport
+    // Right viewport
     // ----------------------------------------------------------------------
-    gl.viewport(gl.drawingBufferWidth/2,        // Viewport lower-right corner
-                0,                              // (x,y) location(in pixels)
-                gl.drawingBufferWidth/2,        // viewport width, height.
-                gl.drawingBufferHeight/2);
+    gl.viewport(gl.drawingBufferWidth/2,
+                0,
+                gl.drawingBufferWidth/2,
+                gl.drawingBufferHeight);
 
-    matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, 0, 0, 0, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, lookAt.x, lookAt.y, lookAt.z, 0, 1, 0);
     //matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
-    matrices.projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 2.0, 20.0);
+    matrices.projMatrix.setOrtho(-6, 6, -12, 12, 1, 100);
     
     draw(gl, canvas, matrices);
     
@@ -275,14 +277,20 @@ function draw(gl, canvas, matrices) {
   // Pass in the projection matrix
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
-  // Pass in the unaltered view matrix (+y is up)
+  // modify view matrix with mouse drag quaternion-based rotation
+  viewMatrix.concat(state.orientation.mat);
+  
+  // rotate view matrix (+z is up)
+  viewMatrix.rotate(-90.0, 1, 0, 0);
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+  
+  // Draw the environment
+  drawEnvironment(gl, matrices);
 
   // Draw the models
   drawAnimals(gl, matrices);
 
-  // Draw the environment
-  drawEnvironment(gl, matrices);
+  
 }
 
 function drawEnvironment(gl, matrices) {
@@ -297,13 +305,6 @@ function drawEnvironment(gl, matrices) {
   // Reset the model matrix and set up the view matrix for the environment
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-
-  // modify view matrix with mouse drag quaternion-based rotation
-  viewMatrix.concat(state.orientation.mat);
-
-  // rotate view matrix (+z is up)
-  viewMatrix.rotate(-90.0, 1, 0, 0);
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
   // draw the ground
   gl.drawArrays(
@@ -361,14 +362,14 @@ function drawAnimals(gl, matrices) {
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
 
   // convert to left-handed to match WebGL display canvas
-  //modelMatrix.scale(1, 1, -1);
+  modelMatrix.scale(1, 1, -1);
 
-  // mouse drag quaternion-based rotation
-  modelMatrix.concat(state.orientation.mat);
+  // rotate to get into "world" coordinates (+z is up)
+  modelMatrix.rotate(-90.0, 1, 0, 0);
 
   pushMatrix(modelMatrix);
 
-/*
+//*
   // draw eagle if not hidden by user
   if (state.eagle.show) {
     modelMatrix.translate(0.0, 0.3, 0.0);
@@ -731,6 +732,11 @@ function animateView(elapsed) {
   viewState.eye.x += (viewRates.eyeStep.x * elapsed) / 1000.0;
   viewState.eye.y += (viewRates.eyeStep.y * elapsed) / 1000.0;
   viewState.eye.z += (viewRates.eyeStep.z * elapsed) / 1000.0;
+
+  // lookAt translation
+  viewState.lookAt.x += (viewRates.eyeStep.x * elapsed) / 1000.0;
+  viewState.lookAt.y += (viewRates.eyeStep.y * elapsed) / 1000.0;
+  viewState.lookAt.z += (viewRates.eyeStep.z * elapsed) / 1000.0;
 }
 
 // HTML elements functions
