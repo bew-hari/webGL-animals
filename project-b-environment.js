@@ -138,7 +138,7 @@ function makeMountainVertices() {
 
   var vertices = new Float32Array((numCapVertices*24) * FLOATS_PER_VERTEX);
   var i = 0;
-
+  
   var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.03, 0.02, 1.0, 1.0, 1.0, 1.0);
   var modB = UTILS.makeModOptions(0.05, 0.05, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.98, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);

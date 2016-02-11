@@ -50,6 +50,12 @@ function initGlobals() {
   globals.state = {
     isPaused: false,
     
+    projection: {
+      angle: 40,
+      near: 1,
+      far: 100,
+    },
+
     view: {
       eye: { x: 0.0, y: 0.0, z: 5.0, },
       lookAt: { x: 0.0, y: 0.0, z: 0.0, },
@@ -178,6 +184,9 @@ function main() {
     var eye = globals.state.view.eye;
     var lookAt = globals.state.view.lookAt;
 
+    var proj = globals.state.projection;
+    proj.aspectRatio = (canvas.width/2) / canvas.height;
+
     // Left viewport
     // ----------------------------------------------------------------------
     gl.viewport(0,
@@ -186,7 +195,7 @@ function main() {
                 gl.drawingBufferHeight);
 
     matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, lookAt.x, lookAt.y, lookAt.z, 0, 1, 0);
-    matrices.projMatrix.setPerspective(40, (canvas.width/2)/canvas.height, 1, 100);
+    matrices.projMatrix.setPerspective(proj.angle, proj.aspectRatio, proj.near, proj.far);
 
     draw(gl, canvas, matrices);
 
@@ -199,14 +208,16 @@ function main() {
                 gl.drawingBufferHeight);
 
     matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, lookAt.x, lookAt.y, lookAt.z, 0, 1, 0);
-    //matrices.projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
-    matrices.projMatrix.setOrtho(-6, 6, -12, 12, 1, 100);
+    
+    var bounds = proj.near + ((proj.far - proj.near) / 3) * Math.tan(proj.angle/2 * Math.PI/180);
+    matrices.projMatrix.setOrtho(-bounds*proj.aspectRatio, bounds*proj.aspectRatio, -bounds, bounds, proj.near, proj.far);
     
     draw(gl, canvas, matrices);
     
     // request that the browser calls tick
     requestId = requestAnimationFrame(tick, canvas);
   };
+
   tick();
 }
 
@@ -316,9 +327,9 @@ function drawEnvironment(gl, matrices) {
   // draw the trees
   drawTrees(gl, environment, globals.state, modelMatrix, u_ModelMatrix);
 //*/
-/*
+//*
   // draw the mountain
-  modelMatrix.setTranslate(-1.5, 3.0, 0.0);
+  modelMatrix.setTranslate(-1.5, 34.0, 0.0);
   modelMatrix.scale(2.0, 2.0, 2.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(
