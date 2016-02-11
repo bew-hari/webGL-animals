@@ -98,12 +98,4 @@ var UTILS = {
   randomRange: function(low, high) {
     return Math.random() * (high - low) + low;
   },
-
-  euclideanDistance: function(p1, p2) {
-    var diffX = p2.x - p1.x,
-        diffY = p2.y - p1.y,
-        diffZ = p2.z - p1.z;
-
-    return Math.sqrt(diffX*diffX + diffY*diffY + diffZ*diffZ);
-  },
 };

@@ -37,7 +37,7 @@ function initGlobals() {
   // animation rates
   globals.rates = {
     view: {
-      eyeStep: { x: 0, y: 0, z: 0, },
+      eyeStep: { right: 0, up: 0, forward: 0, },
       panStep: { horizontal: 0, vertical: 0, },
     },
     
@@ -58,6 +58,7 @@ function initGlobals() {
       eye: { x: 0.0, y: 0.0, z: 5.0, },
       lookAt: { x: 0.0, y: 0.0, z: 0.0, },
       pan: { horizontal: 0.0, vertical: 0.0, },
+      cylinderRadius: 5,
     },
 
     orientation: {
@@ -192,8 +193,6 @@ function main() {
     var eye = globals.state.view.eye,
         lookAt = globals.state.view.lookAt,
         pan = globals.state.view.pan;
-
-    var eyeToLookAt = UTILS.euclideanDistance(eye, lookAt);
 
     var proj = globals.state.projection;
     proj.aspectRatio = (canvas.width/2) / canvas.height;
@@ -744,28 +743,36 @@ function animateAnimals(elapsed) {
 
 function animateView(elapsed) {
 
-  var eye = globals.state.view.eye;
-  var lookAt = globals.state.view.lookAt;
-  var pan = globals.state.view.pan;
+  var eye = globals.state.view.eye,
+      lookAt = globals.state.view.lookAt,
+      pan = globals.state.view.pan,
+      cylinderRadius = globals.state.view.cylinderRadius;
 
   var eyeStep = globals.rates.view.eyeStep,
       panStep = globals.rates.view.panStep;
 
-  var eyeToLookAt = UTILS.euclideanDistance(eye, lookAt);
+  var forward = new Vector3([Math.sin(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius, -Math.cos(pan.horizontal*Math.PI/180)]).normalize();
+  var right = forward.cross(new Vector3([0, 1, 0])).normalize();
 
+  var dx = eyeStep.right * right.elements[0] + eyeStep.forward * forward.elements[0],
+      dy = eyeStep.up + eyeStep.forward * forward.elements[1],
+      dz = eyeStep.right * right.elements[2] + eyeStep.forward * forward.elements[2];
+  
   // eye translation
-  eye.x += (eyeStep.x * elapsed) / 1000.0;
-  eye.y += (eyeStep.y * elapsed) / 1000.0;
-  eye.z += (eyeStep.z * elapsed) / 1000.0;
+  eye.x += (dx * elapsed) / 1000.0;
+  eye.y += (dy * elapsed) / 1000.0;
+  eye.z += (dz * elapsed) / 1000.0;
 
   // pan
   pan.horizontal += (panStep.horizontal * elapsed) / 1000.0;
   pan.vertical += (panStep.vertical * elapsed) / 1000.0;
+  pan.horizontal %= 360;
+  pan.vertical %= 360;
 
   // lookAt adjustment
-  lookAt.x = eye.x + Math.sin(pan.horizontal*Math.PI/180)*eyeToLookAt;
-  lookAt.y += (eyeStep.y * elapsed) / 1000.0;
-  lookAt.z = eye.z - Math.cos(pan.horizontal*Math.PI/180)*eyeToLookAt;
+  lookAt.x = eye.x + Math.sin(pan.horizontal*Math.PI/180)*cylinderRadius;
+  lookAt.y += (dy * elapsed) / 1000.0;
+  lookAt.z = eye.z - Math.cos(pan.horizontal*Math.PI/180)*cylinderRadius;
 }
 
 // HTML elements functions
@@ -887,15 +894,7 @@ function myMouseUp(e, gl, canvas) {
       && Math.abs(y - mouse.click.y) < 0.001) {
     
     // do something for click
-    var eye = globals.state.view.eye;
-    var pan = globals.state.view.pan;
-    var lookAt = globals.state.view.lookAt;
     
-    //console.log(eye, lookAt);
-    //console.log(UTILS.euclideanDistance(eye, lookAt));
-    console.log(lookAt.x, lookAt.z);
-    console.log(eye.x + Math.sin(pan.horizontal*Math.PI/180)*UTILS.euclideanDistance(eye, lookAt));
-    console.log(eye.z - Math.cos(pan.horizontal*Math.PI/180)*UTILS.euclideanDistance(eye, lookAt));
   }
 }
 
@@ -920,48 +919,82 @@ function updateOrientation(orientation, xdrag, ydrag) {
 
 // keyboard listeners
 window.onkeydown = function(e) {
-  var rates = globals.rates;
+  var eye = globals.state.view.eye,
+      pan = globals.state.view.pan,
+      cylinderRadius = globals.state.view.cylinderRadius;
 
-  if (e.keyCode == 65) // A key
-    rates.view.eyeStep.x = -EYE_STEP;
-  else if (e.keyCode == 68) // D key
-    rates.view.eyeStep.x = EYE_STEP;
-  else if (e.keyCode == 87) // W key
-    rates.view.eyeStep.y = EYE_STEP;
-  else if (e.keyCode == 83) // S key
-    rates.view.eyeStep.y = -EYE_STEP;
-  else if (e.keyCode == 81) // Q key
-    rates.view.eyeStep.z = EYE_STEP;
-  else if (e.keyCode == 69) // E key
-    rates.view.eyeStep.z = -EYE_STEP;
+  var eyeStep = globals.rates.view.eyeStep,
+      panStep = globals.rates.view.panStep;
 
+  var forward = new Vector3([Math.sin(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius, -Math.cos(pan.horizontal*Math.PI/180)]).normalize();
+  var right = forward.cross(new Vector3([0, 1, 0])).normalize();
 
-  else if (e.keyCode == 37) // left arrow
-    rates.view.panStep.horizontal = -20*PAN_STEP;
-  else if (e.keyCode == 39) // right arrow
-    rates.view.panStep.horizontal = 20*PAN_STEP;
-  else if (e.keyCode == 38) // up arrow
-    rates.view.panStep.vertical = PAN_STEP;
-  else if (e.keyCode == 40) // down arrow
-    rates.view.panStep.vertical = -PAN_STEP;
+  switch (e.keyCode) {
+    case 65: // A key
+      eyeStep.right = -EYE_STEP;
+      break;
+    case 68: // D key
+      eyeStep.right = EYE_STEP;
+      break;
+    case 87: // W key
+      eyeStep.up = EYE_STEP;
+      break;
+    case 83: // S key
+      eyeStep.up = -EYE_STEP;
+      break;
+    case 81: // Q key
+      eyeStep.forward = -EYE_STEP;
+      break;
+    case 69: // E key
+      eyeStep.forward = EYE_STEP;
+      break;
+    case 37: // left arrow
+      panStep.horizontal = -20*PAN_STEP;
+      break;
+    case 39: // right arrow
+      panStep.horizontal = 20*PAN_STEP;
+      break;
+    case 38: // up arrow
+      panStep.vertical = PAN_STEP;
+      break;
+    case 40: // down arrow
+      panStep.vertical = -PAN_STEP;
+      break;
+    default:
+      return;
+  }
 };
 
 window.onkeyup = function(e) {
-  var rates = globals.rates;
   var state = globals.state;
+  var eyeStep = globals.rates.view.eyeStep,
+      panStep = globals.rates.view.panStep;
 
-  if ((e.keyCode == 65) || (e.keyCode == 68)) // A or D key 
-    rates.view.eyeStep.x = 0;
-  else if ((e.keyCode == 87) || (e.keyCode == 83)) // W or S key
-    rates.view.eyeStep.y = 0;
-  else if ((e.keyCode == 81) || (e.keyCode == 69)) // Q or E key
-    rates.view.eyeStep.z = 0;
-
-  else if ((e.keyCode == 37) || (e.keyCode == 39)) // left or right arrow
-    rates.view.panStep.horizontal = 0;
-  else if ((e.keyCode == 38) || (e.keyCode == 40)) // up or down arrow
-    rates.view.panStep.vertical = 0;
-
-  else if (e.keyCode == 32) // spacebar
-    state.isPaused = !state.isPaused;
+  switch (e.keyCode) {
+    case 65: // A key
+    case 68: // D key
+      eyeStep.right = 0;
+      break;
+    case 87: // W key
+    case 83: // S key
+      eyeStep.up = 0;
+      break;
+    case 81: // Q key
+    case 69: // E key
+      eyeStep.forward = 0;
+      break;
+    case 37: // left arrow
+    case 39: // right arrow
+      panStep.horizontal = 0;
+      break;
+    case 38: // up arrow
+    case 40: // down arrow
+      panStep.vertical = 0;
+      break;
+    case 32: // spacebar
+      state.isPaused = !state.isPaused;
+      break;
+    default:
+      return;
+  }
 };
