@@ -1,7 +1,8 @@
 function Environment() {
   var groundVertices = makeGroundVertices(),
       mountainVertices = makeMountainVertices(),
-      treeVertices = makeTreeVertices();
+      treeVertices = makeTreeVertices(),
+      rockVertices = makeRockVertices();
 
   var ground = {
     startVertexOffset: 0,
@@ -18,12 +19,23 @@ function Environment() {
     numVertices: treeVertices.length / FLOATS_PER_VERTEX,
   };
 
-  var numElements = groundVertices.length + mountainVertices.length + treeVertices.length;
+  var rock = {
+    startVertexOffset: tree.startVertexOffset + tree.numVertices,
+    numVertices: rockVertices.length / FLOATS_PER_VERTEX,
+  };
+
+  var numElements = 
+    groundVertices.length
+    + mountainVertices.length
+    + treeVertices.length
+    + rockVertices.length;
+
   var vertices = new Float32Array(numElements);
 
   vertices.set(groundVertices, 0);
   vertices.set(mountainVertices, mountain.startVertexOffset*FLOATS_PER_VERTEX);
   vertices.set(treeVertices, tree.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(rockVertices, rock.startVertexOffset*FLOATS_PER_VERTEX);
   
   // save all properties
   this.numElements = numElements;
@@ -33,6 +45,7 @@ function Environment() {
   this.ground = ground;
   this.mountain = mountain;
   this.tree = tree;
+  this.rock = rock;
 }
 
 function makeGroundVertices() {
@@ -118,10 +131,10 @@ function makeTreeVertices() {
   modB = UTILS.makeModOptions(radius.lowerLeavesTop, radius.lowerLeavesTop, 0.0, 0.0, 0.0, 0.0, 1.0, 0.01, 0.0, 0.55, 0.0, 0.4, 0.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.middleLeavesBottom, radius.middleLeavesBottom, 0.0, 1.0, 0.0, 1.0, 0.0, 0.01, 0.0, 0.5, 0.0, 0.6, 0.2);
+  modA = UTILS.makeModOptions(radius.middleLeavesBottom, radius.middleLeavesBottom, 0.0, 22.5, 0.0, 0.0, 1.0, 0.01, 0.0, 0.5, 0.0, 0.6, 0.2);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.middleLeavesTop, radius.middleLeavesTop, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.8, 0.0, 0.4, 0.0);
+  modB = UTILS.makeModOptions(radius.middleLeavesTop, radius.middleLeavesTop, 0.0, 22.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.8, 0.0, 0.4, 0.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
   modA = UTILS.makeModOptions(radius.upperLeavesBottom, radius.upperLeavesBottom, 0.0, -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 0.7, 0.0, 0.6, 0.2);
@@ -138,7 +151,7 @@ function makeMountainVertices() {
 
   var vertices = new Float32Array((numCapVertices*24) * FLOATS_PER_VERTEX);
   var i = 0;
-  
+
   var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.03, 0.02, 1.0, 1.0, 1.0, 1.0);
   var modB = UTILS.makeModOptions(0.05, 0.05, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.98, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
@@ -178,6 +191,31 @@ function makeMountainVertices() {
 
   modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.02, 0.85, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  return vertices;
+}
+
+function makeRockVertices() {
+  var numCapVertices = 8;
+
+  var vertices = new Float32Array((numCapVertices*10) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2);
+  var modB = UTILS.makeModOptions(0.9, 0.7, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(1.0, 0.8, 0.0, 5.0, 0.0, 1.0, 0.0, 0.05, 0.0, 0.25, 0.3, 0.3, 0.3);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  modB = UTILS.makeModOptions(0.8, 0.7, 0.0, 10.0, 0.0, 0.0, 1.0, 0.1, 0.05, 0.6, 0.25, 0.3, 0.15);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(0.4, 0.5, 0.0, 10.0, 1.0, 1.0, 0.0, 0.25, 0.0, 0.85, 0.2, 0.3, 0.1);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.4, 0.0, 1.0, 0.2, 0.4, 0.1);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
   return vertices;
 }

@@ -27,9 +27,9 @@ var FSHADER_SOURCE =
 var FLOATS_PER_VERTEX = 7;
 var FSIZE = Float32Array.BYTES_PER_ELEMENT;
 
-var EYE_STEP = 0.5,
-    EAGLE_WING_ANGLE_STEP = 100.0,
-    FOX_LEG_ANGLE_STEP = 150.0;
+var EYE_STEP = 1.5,
+    PAN_STEP = 2.0,
+    EAGLE_STEP = 100.0;
 
 var globals = {};
 
@@ -38,12 +38,10 @@ function initGlobals() {
   globals.rates = {
     view: {
       eyeStep: { x: 0, y: 0, z: 0, },
-      lookAtStep: { x: 0, y: 0, z: 0, },
+      panStep: { horizontal: 0, vertical: 0, },
     },
     
-    eagleWingAngleStep: EAGLE_WING_ANGLE_STEP,
-    foxUpperLegAngleStep: FOX_LEG_ANGLE_STEP,
-    foxLowerLegAngleStep: FOX_LEG_ANGLE_STEP,
+    eagleStep: EAGLE_STEP,
   };
 
   // animation states
@@ -53,12 +51,13 @@ function initGlobals() {
     projection: {
       angle: 40,
       near: 1,
-      far: 100,
+      far: 67,
     },
 
     view: {
       eye: { x: 0.0, y: 0.0, z: 5.0, },
       lookAt: { x: 0.0, y: 0.0, z: 0.0, },
+      pan: { horizontal: 0.0, vertical: 0.0, },
     },
 
     orientation: {
@@ -74,17 +73,26 @@ function initGlobals() {
 
     fox: {
       show: true,
-      upperLegAngle: 0.0,
-      lowerLegAngle: 30.0,
-      pawAngle: 0.0,
+      transform: UTILS.makeRandomTransforms(
+        1,
+        [1, 1],
+        [0, 360],
+        [-5, 5], [15, 18], [0, 0]
+        )[0],
     },
 
     environment: {
       treeTransforms: UTILS.makeRandomTransforms(
-        1, 
+        2, 
         [0.9, 1.1],
-        [0.0, 360.0],
-        [-5, 5], [0, 20], [0, 0]
+        [0, 360],
+        [-5, 5], [5, 15], [0, 0]
+      ),
+      rockTransforms: UTILS.makeRandomTransforms(
+        1,
+        [0.1, 0.2],
+        [0, 360],
+        [-5, 5], [5, 15], [0, 0]
       ),
     }
   };
@@ -146,7 +154,7 @@ function main() {
 
   // Get storage location of u_ModelMatrix
   var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
-  if (!u_ModelMatrix) { 
+  if (!u_ModelMatrix) {
     console.log('Failed to get the storage location of u_ModelMatrix');
     return;
   }
@@ -181,8 +189,11 @@ function main() {
     // Clear <canvas>  colors AND the depth buffer
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
-    var eye = globals.state.view.eye;
-    var lookAt = globals.state.view.lookAt;
+    var eye = globals.state.view.eye,
+        lookAt = globals.state.view.lookAt,
+        pan = globals.state.view.pan;
+
+    var eyeToLookAt = UTILS.euclideanDistance(eye, lookAt);
 
     var proj = globals.state.projection;
     proj.aspectRatio = (canvas.width/2) / canvas.height;
@@ -194,11 +205,13 @@ function main() {
                 gl.drawingBufferWidth/2, 
                 gl.drawingBufferHeight);
 
-    matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, lookAt.x, lookAt.y, lookAt.z, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(
+      eye.x, eye.y, eye.z, 
+      lookAt.x, lookAt.y + pan.vertical, lookAt.z,
+      0, 1, 0);
     matrices.projMatrix.setPerspective(proj.angle, proj.aspectRatio, proj.near, proj.far);
 
     draw(gl, canvas, matrices);
-
 
     // Right viewport
     // ----------------------------------------------------------------------
@@ -207,7 +220,10 @@ function main() {
                 gl.drawingBufferWidth/2,
                 gl.drawingBufferHeight);
 
-    matrices.viewMatrix.setLookAt(eye.x, eye.y, eye.z, lookAt.x, lookAt.y, lookAt.z, 0, 1, 0);
+    matrices.viewMatrix.setLookAt(
+      eye.x, eye.y, eye.z,
+      lookAt.x, lookAt.y + pan.vertical, lookAt.z,
+      0, 1, 0);
     
     var bounds = proj.near + ((proj.far - proj.near) / 3) * Math.tan(proj.angle/2 * Math.PI/180);
     matrices.projMatrix.setOrtho(-bounds*proj.aspectRatio, bounds*proj.aspectRatio, -bounds, bounds, proj.near, proj.far);
@@ -288,8 +304,9 @@ function draw(gl, canvas, matrices) {
   // Pass in the projection matrix
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
-  // modify view matrix with mouse drag quaternion-based rotation
-  viewMatrix.concat(state.orientation.mat);
+  // modify view matrix with mouse drag quaternion-based rotation 
+  // doesn't work; weird stuff happens
+  //viewMatrix.concat(state.orientation.mat);
   
   // rotate view matrix (+z is up)
   viewMatrix.rotate(-90.0, 1, 0, 0);
@@ -324,13 +341,14 @@ function drawEnvironment(gl, matrices) {
     environment.ground.numVertices);
 
 //*
-  // draw the trees
-  drawTrees(gl, environment, globals.state, modelMatrix, u_ModelMatrix);
+  // draw some trees
+  drawTrees(gl, environment, globals.state.environment, modelMatrix, u_ModelMatrix);
 //*/
+
 //*
   // draw the mountain
-  modelMatrix.setTranslate(-1.5, 34.0, 0.0);
-  modelMatrix.scale(2.0, 2.0, 2.0);
+  modelMatrix.setTranslate(-1.5, 23.0, 0.0);
+  modelMatrix.scale(10.0, 10.0, 5.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -339,15 +357,16 @@ function drawEnvironment(gl, matrices) {
 //*/
 }
 
-function drawTrees(gl, environment, state, modelMatrix, u_ModelMatrix) {
+function drawTrees(gl, environment, envState, modelMatrix, u_ModelMatrix) {
   
-  var treeTransforms = state.environment.treeTransforms;
+  // first, draw some trees
+  var transforms = envState.treeTransforms;
   var translate, angle, scale;
 
-  for (var i=0; i<treeTransforms.length; i++) {
-    translate = treeTransforms[i].translate;
-    angle = treeTransforms[i].angle;
-    scale = treeTransforms[i].scale;
+  for (var i=0; i<transforms.length; i++) {
+    translate = transforms[i].translate;
+    angle = transforms[i].angle;
+    scale = transforms[i].scale;
 
     modelMatrix.setTranslate(translate.x, translate.y, translate.z);
     modelMatrix.rotate(angle, 0, 0, 1);
@@ -358,6 +377,25 @@ function drawTrees(gl, environment, state, modelMatrix, u_ModelMatrix) {
       gl.TRIANGLE_STRIP,
       environment.startVertexOffset + environment.tree.startVertexOffset,
       environment.tree.numVertices);  
+  }
+
+  // then draw some rocks
+  transforms = envState.rockTransforms;
+
+  for (var i=0; i<transforms.length; i++) {
+    translate = transforms[i].translate;
+    angle = transforms[i].angle;
+    scale = transforms[i].scale;
+
+    modelMatrix.setTranslate(translate.x, translate.y, translate.z);
+    modelMatrix.rotate(angle, 0, 0, 1);
+    modelMatrix.scale(scale.x, scale.y, scale.z);
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+    gl.drawArrays(
+      gl.TRIANGLE_STRIP,
+      environment.startVertexOffset + environment.rock.startVertexOffset,
+      environment.rock.numVertices);  
   }
 }
 
@@ -390,7 +428,7 @@ function drawAnimals(gl, matrices) {
 
   modelMatrix = popMatrix();
 
-/*
+//*
   // draw fox if not hidden by user
   if (state.fox.show) {
     drawFox(gl, data.fox, state.fox, modelMatrix, u_ModelMatrix);
@@ -405,7 +443,7 @@ function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix) {
   
   // BODY
   //=========================================================================//
-  modelMatrix.scale(0.25, 0.25, 0.25);
+  modelMatrix.scale(0.2, 0.2, 0.2);
   modelMatrix.translate(0.0, -state.wingAngle / 360, 0.0);
 
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -479,14 +517,15 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
 }
 
 function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
-  modelMatrix.scale(0.5, 0.5, 0.5);
-  modelMatrix.rotate(5.0, 1, 0, 0);
+  var transform = state.transform;
+
+  modelMatrix.translate(transform.translate.x, 0.18, transform.translate.y);
+  modelMatrix.scale(0.3, 0.3, 0.3);
+  modelMatrix.rotate(transform.angle, 0, 1, 0);
   
   // UPPER HALF
   //=========================================================================//
   // upper body
-  modelMatrix.rotate(state.upperLegAngle/6, 1, 0, 0);
-  modelMatrix.translate(0.0, state.upperLegAngle/480, 0.0);
   pushMatrix(modelMatrix);
 
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -522,7 +561,6 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // lower body
   modelMatrix = popMatrix();
   modelMatrix.translate(0.0, 0.0, 0.03);
-  modelMatrix.rotate(-state.upperLegAngle*2/6, 1, 0, 0);
   pushMatrix(modelMatrix);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
@@ -553,7 +591,6 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.translate(0.0, 0.05, -0.5);
   
   // upper
-  modelMatrix.rotate(state.lowerLegAngle/3, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -563,7 +600,6 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   // middle
   modelMatrix.translate(0.0, 0.0, -0.50);
-  modelMatrix.rotate(-state.lowerLegAngle*2/6, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -573,7 +609,6 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   // lower
   modelMatrix.translate(0.0, 0.0, -0.3);
-  modelMatrix.rotate(-state.lowerLegAngle*2/6, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -586,7 +621,6 @@ function drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.translate(0.08, 0.25, 0.7);
   modelMatrix.rotate(-40.0, 0, 0, 1);
   modelMatrix.rotate(20.0, 1, 0, 0);
-  modelMatrix.rotate(-state.upperLegAngle/2, 1, 0, 0);
   modelMatrix.scale(0.15, 0.3, 0.3);
 
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -602,7 +636,6 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(90.0, 1, 0, 0);
   modelMatrix.rotate(-90.0, 0, 0, 1);
   modelMatrix.rotate(15.0, 0, 1, 0);
-  modelMatrix.rotate(state.upperLegAngle, 0, 1, 0);
   
   // upper
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -615,7 +648,7 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // lower
   modelMatrix.translate(0.0, 0.0, 0.5);
   modelMatrix.rotate(-60.0, 0, 1, 0);
-  modelMatrix.rotate(state.lowerLegAngle/1.5, 0, 1, 0);
+  modelMatrix.rotate(20.0, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -626,7 +659,6 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // paw
   modelMatrix.translate(0.0, 0.0, 0.4);
   modelMatrix.rotate(20.0, 0, 1, 0);
-  modelMatrix.rotate(state.pawAngle, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -640,7 +672,6 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(90.0, 1, 0, 0);
   modelMatrix.rotate(-90.0, 0, 0, 1);
   modelMatrix.rotate(20.0, 0, 1, 0);
-  modelMatrix.rotate(-state.upperLegAngle, 0, 1, 0);
   
   // upper
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -653,7 +684,7 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // lower
   modelMatrix.translate(0.0, 0.0, 0.5);
   modelMatrix.rotate(-30.0, 0, 1, 0);
-  modelMatrix.rotate(-state.lowerLegAngle/1.2, 0, 1, 0);
+  modelMatrix.rotate(-25.0, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -663,8 +694,7 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   // paw
   modelMatrix.translate(0.0, 0.0, 0.4);
-  modelMatrix.rotate(20.0, 0, 1, 0);
-  modelMatrix.rotate(state.pawAngle, 0, 1, 0);
+  modelMatrix.rotate(30.0, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -700,54 +730,42 @@ function animateAnimals(elapsed) {
 
   // eagle wing angle
   var wingAngle = state.eagle.wingAngle;
-  if (wingAngle >   30.0 && rates.eagleWingAngleStep > 0) 
-    rates.eagleWingAngleStep = -rates.eagleWingAngleStep*2;
+  if (wingAngle >   30.0 && rates.eagleStep > 0) 
+    rates.eagleStep = -rates.eagleStep*2;
 
-  if (wingAngle <  -40.0 && rates.eagleWingAngleStep < 0) 
-    rates.eagleWingAngleStep = -rates.eagleWingAngleStep/2;
+  if (wingAngle <  -40.0 && rates.eagleStep < 0) 
+    rates.eagleStep = -rates.eagleStep/2;
   
-  var newWingAngle = wingAngle + (rates.eagleWingAngleStep * elapsed) / 1000.0;
+  var newWingAngle = wingAngle + (rates.eagleStep * elapsed) / 1000.0;
   state.eagle.wingAngle = newWingAngle % 360;
 
   state.eagle.tailAngle = (newWingAngle % 360) / 3.0;
-
-
-  // fox leg angle
-  var upperLegAngle = state.fox.upperLegAngle;
-  if (upperLegAngle >   40.0 && rates.foxUpperLegAngleStep > 0) 
-    rates.foxUpperLegAngleStep = -rates.foxUpperLegAngleStep;
-  if (upperLegAngle <  -40.0 && rates.foxUpperLegAngleStep < 0) 
-    rates.foxUpperLegAngleStep = -rates.foxUpperLegAngleStep;
-
-  var newAngle = upperLegAngle + (rates.foxUpperLegAngleStep * elapsed) / 1000.0;
-  newAngle %= 360;
-  state.fox.upperLegAngle = newAngle;
-  state.fox.pawAngle = newAngle / 2 + 30.0;
-
-  var lowerLegAngle = state.fox.lowerLegAngle;
-  if (lowerLegAngle >   40.0 && rates.foxLowerLegAngleStep > 0) 
-    rates.foxLowerLegAngleStep = -rates.foxLowerLegAngleStep;
-  if (lowerLegAngle <  -40.0 && rates.foxLowerLegAngleStep < 0) 
-    rates.foxLowerLegAngleStep = -rates.foxLowerLegAngleStep;
-
-  newAngle = lowerLegAngle + (rates.foxLowerLegAngleStep * elapsed) / 1000.0;
-  newAngle %= 360;
-  state.fox.lowerLegAngle = newAngle; 
 }
 
 function animateView(elapsed) {
-  var viewState = globals.state.view;
-  var viewRates = globals.rates.view;
+
+  var eye = globals.state.view.eye;
+  var lookAt = globals.state.view.lookAt;
+  var pan = globals.state.view.pan;
+
+  var eyeStep = globals.rates.view.eyeStep,
+      panStep = globals.rates.view.panStep;
+
+  var eyeToLookAt = UTILS.euclideanDistance(eye, lookAt);
 
   // eye translation
-  viewState.eye.x += (viewRates.eyeStep.x * elapsed) / 1000.0;
-  viewState.eye.y += (viewRates.eyeStep.y * elapsed) / 1000.0;
-  viewState.eye.z += (viewRates.eyeStep.z * elapsed) / 1000.0;
+  eye.x += (eyeStep.x * elapsed) / 1000.0;
+  eye.y += (eyeStep.y * elapsed) / 1000.0;
+  eye.z += (eyeStep.z * elapsed) / 1000.0;
 
-  // lookAt translation
-  viewState.lookAt.x += (viewRates.eyeStep.x * elapsed) / 1000.0;
-  viewState.lookAt.y += (viewRates.eyeStep.y * elapsed) / 1000.0;
-  viewState.lookAt.z += (viewRates.eyeStep.z * elapsed) / 1000.0;
+  // pan
+  pan.horizontal += (panStep.horizontal * elapsed) / 1000.0;
+  pan.vertical += (panStep.vertical * elapsed) / 1000.0;
+
+  // lookAt adjustment
+  lookAt.x = eye.x + Math.sin(pan.horizontal*Math.PI/180)*eyeToLookAt;
+  lookAt.y += (eyeStep.y * elapsed) / 1000.0;
+  lookAt.z = eye.z - Math.cos(pan.horizontal*Math.PI/180)*eyeToLookAt;
 }
 
 // HTML elements functions
@@ -869,6 +887,15 @@ function myMouseUp(e, gl, canvas) {
       && Math.abs(y - mouse.click.y) < 0.001) {
     
     // do something for click
+    var eye = globals.state.view.eye;
+    var pan = globals.state.view.pan;
+    var lookAt = globals.state.view.lookAt;
+    
+    //console.log(eye, lookAt);
+    //console.log(UTILS.euclideanDistance(eye, lookAt));
+    console.log(lookAt.x, lookAt.z);
+    console.log(eye.x + Math.sin(pan.horizontal*Math.PI/180)*UTILS.euclideanDistance(eye, lookAt));
+    console.log(eye.z - Math.cos(pan.horizontal*Math.PI/180)*UTILS.euclideanDistance(eye, lookAt));
   }
 }
 
@@ -895,24 +922,46 @@ function updateOrientation(orientation, xdrag, ydrag) {
 window.onkeydown = function(e) {
   var rates = globals.rates;
 
-  if (e.keyCode == 37) // left arrow
+  if (e.keyCode == 65) // A key
     rates.view.eyeStep.x = -EYE_STEP;
-  else if (e.keyCode == 39) // right arrow
-    rates.view.eyeStep.x = +EYE_STEP;
-  else if (e.keyCode == 38) // up arrow
+  else if (e.keyCode == 68) // D key
+    rates.view.eyeStep.x = EYE_STEP;
+  else if (e.keyCode == 87) // W key
     rates.view.eyeStep.y = EYE_STEP;
-  else if (e.keyCode == 40) // down arrow
+  else if (e.keyCode == 83) // S key
     rates.view.eyeStep.y = -EYE_STEP;
+  else if (e.keyCode == 81) // Q key
+    rates.view.eyeStep.z = EYE_STEP;
+  else if (e.keyCode == 69) // E key
+    rates.view.eyeStep.z = -EYE_STEP;
+
+
+  else if (e.keyCode == 37) // left arrow
+    rates.view.panStep.horizontal = -20*PAN_STEP;
+  else if (e.keyCode == 39) // right arrow
+    rates.view.panStep.horizontal = 20*PAN_STEP;
+  else if (e.keyCode == 38) // up arrow
+    rates.view.panStep.vertical = PAN_STEP;
+  else if (e.keyCode == 40) // down arrow
+    rates.view.panStep.vertical = -PAN_STEP;
 };
 
 window.onkeyup = function(e) {
   var rates = globals.rates;
   var state = globals.state;
 
-  if ((e.keyCode == 37) || (e.keyCode == 39)) 
+  if ((e.keyCode == 65) || (e.keyCode == 68)) // A or D key 
     rates.view.eyeStep.x = 0;
-  else if ((e.keyCode == 38) || (e.keyCode == 40)) 
+  else if ((e.keyCode == 87) || (e.keyCode == 83)) // W or S key
     rates.view.eyeStep.y = 0;
+  else if ((e.keyCode == 81) || (e.keyCode == 69)) // Q or E key
+    rates.view.eyeStep.z = 0;
+
+  else if ((e.keyCode == 37) || (e.keyCode == 39)) // left or right arrow
+    rates.view.panStep.horizontal = 0;
+  else if ((e.keyCode == 38) || (e.keyCode == 40)) // up or down arrow
+    rates.view.panStep.vertical = 0;
+
   else if (e.keyCode == 32) // spacebar
     state.isPaused = !state.isPaused;
 };

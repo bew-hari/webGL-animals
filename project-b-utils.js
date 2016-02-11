@@ -82,6 +82,7 @@ var UTILS = {
       transY = this.randomRange(transRangeY[0], transRangeY[1]);
       transZ = this.randomRange(transRangeZ[0], transRangeZ[1]);
 
+      //transX = 0; transY = 0; transZ = 0; scaleX = 1; scaleY = 1; scaleZ = 1; angle = 0;
       transforms.push({
         scale: {x: scaleX, y: scaleY, z: scaleZ},
         angle: angle,
@@ -96,5 +97,13 @@ var UTILS = {
   // returns random float within given range
   randomRange: function(low, high) {
     return Math.random() * (high - low) + low;
+  },
+
+  euclideanDistance: function(p1, p2) {
+    var diffX = p2.x - p1.x,
+        diffY = p2.y - p1.y,
+        diffZ = p2.z - p1.z;
+
+    return Math.sqrt(diffX*diffX + diffY*diffY + diffZ*diffZ);
   },
 };
