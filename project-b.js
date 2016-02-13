@@ -55,7 +55,7 @@ function initGlobals() {
     },
 
     view: {
-      eye: { x: 0.0, y: 0.0, z: 5.0, },
+      eye: { x: 0.0, y: -5.0, z: 0.0, },
       lookAt: { x: 0.0, y: 0.0, z: 0.0, },
       pan: { horizontal: 0.0, vertical: 0.0, },
       cylinderRadius: 5,
@@ -74,17 +74,17 @@ function initGlobals() {
 
     fox: {
       show: true,
-      transform: UTILS.makeRandomTransforms(
+      transforms: UTILS.makeRandomTransforms(
         1,
-        [1, 1],
+        [0.5, 1],
         [0, 360],
         [-5, 5], [15, 18], [0, 0]
-        )[0],
+      ),
     },
 
     environment: {
       treeTransforms: UTILS.makeRandomTransforms(
-        2, 
+        1, 
         [0.9, 1.1],
         [0, 360],
         [-5, 5], [5, 15], [0, 0]
@@ -205,9 +205,9 @@ function main() {
                 gl.drawingBufferHeight);
 
     matrices.viewMatrix.setLookAt(
-      eye.x, eye.y, eye.z, 
-      lookAt.x, lookAt.y + pan.vertical, lookAt.z,
-      0, 1, 0);
+      eye.x, eye.y, eye.z,
+      lookAt.x, lookAt.y, lookAt.z,
+      0, 0, 1);
     matrices.projMatrix.setPerspective(proj.angle, proj.aspectRatio, proj.near, proj.far);
 
     draw(gl, canvas, matrices);
@@ -221,8 +221,8 @@ function main() {
 
     matrices.viewMatrix.setLookAt(
       eye.x, eye.y, eye.z,
-      lookAt.x, lookAt.y + pan.vertical, lookAt.z,
-      0, 1, 0);
+      lookAt.x, lookAt.y, lookAt.z,
+      0, 0, 1);
     
     var bounds = proj.near + ((proj.far - proj.near) / 3) * Math.tan(proj.angle/2 * Math.PI/180);
     matrices.projMatrix.setOrtho(-bounds*proj.aspectRatio, bounds*proj.aspectRatio, -bounds, bounds, proj.near, proj.far);
@@ -308,14 +308,14 @@ function draw(gl, canvas, matrices) {
   //viewMatrix.concat(state.orientation.mat);
   
   // rotate view matrix (+z is up)
-  viewMatrix.rotate(-90.0, 1, 0, 0);
+  //viewMatrix.rotate(-90.0, 1, 0, 0);
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
   
   // Draw the environment
   drawEnvironment(gl, matrices);
 
   // Draw the models
-  drawAnimals(gl, matrices);
+  //drawAnimals(gl, matrices);
 
   
 }
@@ -326,11 +326,10 @@ function drawEnvironment(gl, matrices) {
 
   var u_ModelMatrix = matrices.u_ModelMatrix;
   var modelMatrix = matrices.modelMatrix;
-  var u_ViewMatrix = matrices.u_ViewMatrix;
-  var viewMatrix = matrices.viewMatrix;
 
   // Reset the model matrix and set up the view matrix for the environment
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
+  modelMatrix.rotate(90.0, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   // draw the ground
@@ -346,6 +345,7 @@ function drawEnvironment(gl, matrices) {
 
 //*
   // draw the mountain
+  //modelMatrix.setRotate(-90.0, 1, 0, 0);
   modelMatrix.setTranslate(-1.5, 23.0, 0.0);
   modelMatrix.scale(10.0, 10.0, 5.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -424,8 +424,6 @@ function drawAnimals(gl, matrices) {
     drawEagle(gl, data.eagle, state.eagle, modelMatrix, u_ModelMatrix);
   }
 //*/
-
-  modelMatrix = popMatrix();
 
 //*
   // draw fox if not hidden by user
@@ -516,104 +514,110 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
 }
 
 function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
-  var transform = state.transform;
+  var transforms = state.transforms;
 
-  modelMatrix.translate(transform.translate.x, 0.18, transform.translate.y);
-  modelMatrix.scale(0.3, 0.3, 0.3);
-  modelMatrix.rotate(transform.angle, 0, 1, 0);
-  
-  // UPPER HALF
-  //=========================================================================//
-  // upper body
-  pushMatrix(modelMatrix);
+  for (var i=0; i<transforms.length; i++) {
+    var transform = transforms[i];
+    modelMatrix = popMatrix();
+    pushMatrix(modelMatrix);
 
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+    modelMatrix.translate(transform.translate.x, 0.18, transform.translate.y);
+    modelMatrix.scale(0.3, 0.3, 0.3);
+    modelMatrix.rotate(transform.angle, 0, 1, 0);
+    
+    // UPPER HALF
+    //=========================================================================//
+    // upper body
+    pushMatrix(modelMatrix);
 
-  gl.drawArrays(
-    gl.TRIANGLE_STRIP,
-    fox.startVertexOffset + fox.upperBody.startVertexOffset,
-    fox.upperBody.numVertices);
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-  // draw the ears
-  pushMatrix(modelMatrix);
-  drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);
+    gl.drawArrays(
+      gl.TRIANGLE_STRIP,
+      fox.startVertexOffset + fox.upperBody.startVertexOffset,
+      fox.upperBody.numVertices);
 
-  modelMatrix = popMatrix();
-  pushMatrix(modelMatrix);
-  modelMatrix.scale(-1.0, 1.0, 1.0);
-  drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);  
+    // draw the ears
+    pushMatrix(modelMatrix);
+    drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-  modelMatrix = popMatrix();
-  modelMatrix.scale(0.7, 0.7, 0.7);
-  pushMatrix(modelMatrix);
+    modelMatrix = popMatrix();
+    pushMatrix(modelMatrix);
+    modelMatrix.scale(-1.0, 1.0, 1.0);
+    drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);  
 
-  // front right leg
-  drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+    modelMatrix = popMatrix();
+    modelMatrix.scale(0.7, 0.7, 0.7);
+    pushMatrix(modelMatrix);
 
-  // front left leg
-  modelMatrix = popMatrix();
-  modelMatrix.scale(-1.0, 1.0, 1.0);
-  drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+    // front right leg
+    drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-  // LOWER HALF
-  //=========================================================================//
-  // lower body
-  modelMatrix = popMatrix();
-  modelMatrix.translate(0.0, 0.0, 0.03);
-  pushMatrix(modelMatrix);
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+    // front left leg
+    modelMatrix = popMatrix();
+    modelMatrix.scale(-1.0, 1.0, 1.0);
+    drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-  gl.drawArrays(
-    gl.TRIANGLE_STRIP,
-    fox.startVertexOffset + fox.lowerBody.startVertexOffset,
-    fox.lowerBody.numVertices);
+    // LOWER HALF
+    //=========================================================================//
+    // lower body
+    modelMatrix = popMatrix();
+    modelMatrix.translate(0.0, 0.0, 0.03);
+    pushMatrix(modelMatrix);
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-  // legs
-  modelMatrix.scale(0.7, 0.7, 0.7);
-  modelMatrix.translate(0.0, -0.03, -0.03);
-  pushMatrix(modelMatrix);
+    gl.drawArrays(
+      gl.TRIANGLE_STRIP,
+      fox.startVertexOffset + fox.lowerBody.startVertexOffset,
+      fox.lowerBody.numVertices);
 
-  // hind right leg
-  modelMatrix = popMatrix();
-  pushMatrix(modelMatrix);
-  drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+    // legs
+    modelMatrix.scale(0.7, 0.7, 0.7);
+    modelMatrix.translate(0.0, -0.03, -0.03);
+    pushMatrix(modelMatrix);
 
-  // hind left leg
-  modelMatrix = popMatrix();
-  modelMatrix.scale(-1.0, 1.0, 1.0);
-  drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+    // hind right leg
+    modelMatrix = popMatrix();
+    pushMatrix(modelMatrix);
+    drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-  // TAIL
-  //=========================================================================//
-  modelMatrix = popMatrix();
+    // hind left leg
+    modelMatrix = popMatrix();
+    modelMatrix.scale(-1.0, 1.0, 1.0);
+    drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-  modelMatrix.translate(0.0, 0.05, -0.5);
-  
-  // upper
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+    // TAIL
+    //=========================================================================//
+    modelMatrix = popMatrix();
 
-  gl.drawArrays(
-    gl.TRIANGLE_STRIP,
-    fox.startVertexOffset + fox.upperTail.startVertexOffset,
-    fox.upperTail.numVertices);
+    modelMatrix.translate(0.0, 0.05, -0.5);
+    
+    // upper
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-  // middle
-  modelMatrix.translate(0.0, 0.0, -0.50);
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+    gl.drawArrays(
+      gl.TRIANGLE_STRIP,
+      fox.startVertexOffset + fox.upperTail.startVertexOffset,
+      fox.upperTail.numVertices);
 
-  gl.drawArrays(
-    gl.TRIANGLE_STRIP,
-    fox.startVertexOffset + fox.middleTail.startVertexOffset,
-    fox.middleTail.numVertices);
+    // middle
+    modelMatrix.translate(0.0, 0.0, -0.50);
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-  // lower
-  modelMatrix.translate(0.0, 0.0, -0.3);
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+    gl.drawArrays(
+      gl.TRIANGLE_STRIP,
+      fox.startVertexOffset + fox.middleTail.startVertexOffset,
+      fox.middleTail.numVertices);
 
-  gl.drawArrays(
-    gl.TRIANGLE_STRIP,
-    fox.startVertexOffset + fox.lowerTail.startVertexOffset,
-    fox.lowerTail.numVertices);
+    // lower
+    modelMatrix.translate(0.0, 0.0, -0.3);
+    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+    gl.drawArrays(
+      gl.TRIANGLE_STRIP,
+      fox.startVertexOffset + fox.lowerTail.startVertexOffset,
+      fox.lowerTail.numVertices);
+  }
 }
 
 function drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix) {
@@ -751,12 +755,16 @@ function animateView(elapsed) {
   var eyeStep = globals.rates.view.eyeStep,
       panStep = globals.rates.view.panStep;
 
-  var forward = new Vector3([Math.sin(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius, -Math.cos(pan.horizontal*Math.PI/180)]).normalize();
-  var right = forward.cross(new Vector3([0, 1, 0])).normalize();
+  // calculate forward and right unit vectors
+  var forward = new Vector3([Math.sin(pan.horizontal*Math.PI/180), Math.cos(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius]).normalize();
+  var right = forward.cross(new Vector3([0, 0, 1])).normalize();
 
-  var dx = eyeStep.right * right.elements[0] + eyeStep.forward * forward.elements[0],
-      dy = eyeStep.up + eyeStep.forward * forward.elements[1],
-      dz = eyeStep.right * right.elements[2] + eyeStep.forward * forward.elements[2];
+  var normalizer = Math.sqrt(eyeStep.right*eyeStep.right + eyeStep.forward*eyeStep.forward);
+  normalizer = normalizer == 0 ? 1 : normalizer;
+
+  var dx = (eyeStep.right * right.elements[0] + eyeStep.forward * forward.elements[0]) / normalizer,
+      dy = (eyeStep.right * right.elements[2] + eyeStep.forward * forward.elements[1]) / normalizer,
+      dz = (eyeStep.up + eyeStep.forward * forward.elements[2]) / normalizer;
   
   // eye translation
   eye.x += (dx * elapsed) / 1000.0;
@@ -771,8 +779,8 @@ function animateView(elapsed) {
 
   // lookAt adjustment
   lookAt.x = eye.x + Math.sin(pan.horizontal*Math.PI/180)*cylinderRadius;
-  lookAt.y += (dy * elapsed) / 1000.0;
-  lookAt.z = eye.z - Math.cos(pan.horizontal*Math.PI/180)*cylinderRadius;
+  lookAt.y = eye.y + Math.cos(pan.horizontal*Math.PI/180)*cylinderRadius;
+  lookAt.z = eye.z + pan.vertical;
 }
 
 // HTML elements functions
@@ -894,7 +902,10 @@ function myMouseUp(e, gl, canvas) {
       && Math.abs(y - mouse.click.y) < 0.001) {
     
     // do something for click
-    
+    //console.log(globals.state.view.pan);
+    var pan = globals.state.view.pan; var cylinderRadius = globals.state.view.cylinderRadius;
+    //console.log(Math.sin(pan.horizontal*Math.PI/180), -Math.cos(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius);
+    console.log(globals.state.view.lookAt);
   }
 }
 

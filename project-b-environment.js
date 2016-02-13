@@ -52,8 +52,8 @@ function makeGroundVertices() {
   var xcount = 100;     // # of lines to draw in x,y to make the grid.
   var ycount = 100;   
   var xymax = 50.0;     // grid size; extends to cover +/-xymax in x and y.
-  var xColr = new Float32Array([1.0, 1.0, 0.3]);  // bright yellow
-  var yColr = new Float32Array([0.5, 1.0, 0.5]);  // bright green.
+  var xColr = new Float32Array([0.8, 0.4, 0.0]);  // reddish brown
+  var yColr = new Float32Array([0.0, 0.4, 0.2]);  // softer brown
 
   var vertices = new Float32Array(FLOATS_PER_VERTEX*2*(xcount+ycount));
   var xgap = xymax/(xcount-1);    // HALF-spacing between lines in x,y;
@@ -64,13 +64,13 @@ function makeGroundVertices() {
   for(v=0, j=0; v<2*xcount; v++, j+= FLOATS_PER_VERTEX) {
     if(v%2==0) {  // put even-numbered vertices at (xnow, -xymax, 0)
       vertices[j  ] = -xymax + (v  )*xgap;  // x
-      vertices[j+1] = -xymax;               // y
-      vertices[j+2] = 0.0;                  // z
+      vertices[j+1] = 0.0;                  // y
+      vertices[j+2] = -xymax;               // z
     }
     else {        // put odd-numbered vertices at (xnow, +xymax, 0).
       vertices[j  ] = -xymax + (v-1)*xgap;  // x
-      vertices[j+1] = xymax;                // y
-      vertices[j+2] = 0.0;                  // z
+      vertices[j+1] = 0.0;                  // y
+      vertices[j+2] = xymax;                // z
     }
     vertices[j+3] = 1.0           // w
     vertices[j+4] = xColr[0];     // red
@@ -82,13 +82,13 @@ function makeGroundVertices() {
   for(v=0; v<2*ycount; v++, j+= FLOATS_PER_VERTEX) {
     if(v%2==0) {    // put even-numbered vertices at (-xymax, ynow, 0)
       vertices[j  ] = -xymax;               // x
-      vertices[j+1] = -xymax + (v  )*ygap;  // y
-      vertices[j+2] = 0.0;                  // z
+      vertices[j+1] = 0.0;                  // y
+      vertices[j+2] = -xymax + (v  )*ygap;  // z
     }
     else {          // put odd-numbered vertices at (+xymax, ynow, 0).
       vertices[j  ] = xymax;                // x
-      vertices[j+1] = -xymax + (v-1)*ygap;  // y
-      vertices[j+2] = 0.0;                  // z
+      vertices[j+1] = 0.0;                  // y
+      vertices[j+2] = -xymax + (v-1)*ygap;  // z
     }
     vertices[j+3] = 1.0           // w
     vertices[j+4] = yColr[0];     // red
