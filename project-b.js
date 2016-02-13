@@ -27,7 +27,7 @@ var FSHADER_SOURCE =
 var FLOATS_PER_VERTEX = 7;
 var FSIZE = Float32Array.BYTES_PER_ELEMENT;
 
-var EYE_STEP = 1.5,
+var EYE_STEP = 2.0,
     PAN_STEP = 2.0,
     EAGLE_STEP = 100.0;
 
@@ -74,28 +74,12 @@ function initGlobals() {
 
     fox: {
       show: true,
-      transforms: UTILS.makeRandomTransforms(
-        1,
+      transforms: UTILS.makeSceneryTransform(
         [0.5, 1],
         [0, 360],
         [-5, 5], [15, 18], [0, 0]
       ),
     },
-
-    environment: {
-      treeTransforms: UTILS.makeRandomTransforms(
-        1, 
-        [0.9, 1.1],
-        [0, 360],
-        [-5, 5], [5, 15], [0, 0]
-      ),
-      rockTransforms: UTILS.makeRandomTransforms(
-        1,
-        [0.1, 0.2],
-        [0, 360],
-        [-5, 5], [5, 15], [0, 0]
-      ),
-    }
   };
 
   // mouse data
@@ -303,13 +287,12 @@ function draw(gl, canvas, matrices) {
   // Pass in the projection matrix
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
+  // Pass in the view matrix (+z is up)
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+
   // modify view matrix with mouse drag quaternion-based rotation 
   // doesn't work; weird stuff happens
   //viewMatrix.concat(state.orientation.mat);
-  
-  // rotate view matrix (+z is up)
-  //viewMatrix.rotate(-90.0, 1, 0, 0);
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
   
   // Draw the environment
   drawEnvironment(gl, matrices);
@@ -329,7 +312,6 @@ function drawEnvironment(gl, matrices) {
 
   // Reset the model matrix and set up the view matrix for the environment
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
-  modelMatrix.rotate(90.0, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   // draw the ground
@@ -338,14 +320,23 @@ function drawEnvironment(gl, matrices) {
     environment.startVertexOffset + environment.ground.startVertexOffset,
     environment.ground.numVertices);
 
-//*
-  // draw some trees
-  drawTrees(gl, environment, globals.state.environment, modelMatrix, u_ModelMatrix);
-//*/
+  // draw the forest
+  modelMatrix.setTranslate(0.0, 10.0, 0.0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    environment.startVertexOffset + environment.forest.startVertexOffset,
+    environment.forest.numVertices);
 
-//*
+  // draw the rocks
+  modelMatrix.setTranslate(0.0, 10.0, 0.0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    environment.startVertexOffset + environment.rock.startVertexOffset,
+    environment.rock.numVertices);
+
   // draw the mountain
-  //modelMatrix.setRotate(-90.0, 1, 0, 0);
   modelMatrix.setTranslate(-1.5, 23.0, 0.0);
   modelMatrix.scale(10.0, 10.0, 5.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -353,49 +344,8 @@ function drawEnvironment(gl, matrices) {
     gl.TRIANGLE_STRIP,
     environment.startVertexOffset + environment.mountain.startVertexOffset,
     environment.mountain.numVertices);
-//*/
-}
 
-function drawTrees(gl, environment, envState, modelMatrix, u_ModelMatrix) {
-  
-  // first, draw some trees
-  var transforms = envState.treeTransforms;
-  var translate, angle, scale;
-
-  for (var i=0; i<transforms.length; i++) {
-    translate = transforms[i].translate;
-    angle = transforms[i].angle;
-    scale = transforms[i].scale;
-
-    modelMatrix.setTranslate(translate.x, translate.y, translate.z);
-    modelMatrix.rotate(angle, 0, 0, 1);
-    modelMatrix.scale(scale.x, scale.y, scale.z);
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-
-    gl.drawArrays(
-      gl.TRIANGLE_STRIP,
-      environment.startVertexOffset + environment.tree.startVertexOffset,
-      environment.tree.numVertices);  
-  }
-
-  // then draw some rocks
-  transforms = envState.rockTransforms;
-
-  for (var i=0; i<transforms.length; i++) {
-    translate = transforms[i].translate;
-    angle = transforms[i].angle;
-    scale = transforms[i].scale;
-
-    modelMatrix.setTranslate(translate.x, translate.y, translate.z);
-    modelMatrix.rotate(angle, 0, 0, 1);
-    modelMatrix.scale(scale.x, scale.y, scale.z);
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-
-    gl.drawArrays(
-      gl.TRIANGLE_STRIP,
-      environment.startVertexOffset + environment.rock.startVertexOffset,
-      environment.rock.numVertices);  
-  }
+  // draw some foxes
 }
 
 function drawAnimals(gl, matrices) {
@@ -763,7 +713,7 @@ function animateView(elapsed) {
   normalizer = normalizer == 0 ? 1 : normalizer;
 
   var dx = (eyeStep.right * right.elements[0] + eyeStep.forward * forward.elements[0]) / normalizer,
-      dy = (eyeStep.right * right.elements[2] + eyeStep.forward * forward.elements[1]) / normalizer,
+      dy = (eyeStep.right * right.elements[1] + eyeStep.forward * forward.elements[1]) / normalizer,
       dz = (eyeStep.up + eyeStep.forward * forward.elements[2]) / normalizer;
   
   // eye translation

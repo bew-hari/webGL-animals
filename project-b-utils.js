@@ -62,36 +62,24 @@ var UTILS = {
     };
   },
 
-  // generates random modelMatrix transforms
-  makeRandomTransforms: function(size, scaleRange, rotateRange, transRangeX, transRangeY, transRangeZ) {
-    var transforms = [];
-    var mat = new Matrix4();
-    
-    var scaleX, scaleY, scaleZ,
-        angle,
-        transX, transY, transZ;
+  makeSceneryTransform: function(scaleRange, rotateRange, transRangeX, transRangeY, transRangeZ) {
+    var transform = new Matrix4();
 
-    while (size > 0) {
-      scaleX = this.randomRange(scaleRange[0], scaleRange[1]);
-      scaleY = this.randomRange(scaleRange[0], scaleRange[1]);
-      scaleZ = this.randomRange(scaleRange[0], scaleRange[1]);
+    var scaleX = this.randomRange(scaleRange[0], scaleRange[1]),
+        scaleY = this.randomRange(scaleRange[0], scaleRange[1]),
+        scaleZ = this.randomRange(scaleRange[0], scaleRange[1]),
 
-      angle = this.randomRange(rotateRange[0], rotateRange[1]);
+        angle = this.randomRange(rotateRange[0], rotateRange[1]),
 
-      transX = this.randomRange(transRangeX[0], transRangeX[1]);
-      transY = this.randomRange(transRangeY[0], transRangeY[1]);
-      transZ = this.randomRange(transRangeZ[0], transRangeZ[1]);
+        transX = this.randomRange(transRangeX[0], transRangeX[1]),
+        transY = this.randomRange(transRangeY[0], transRangeY[1]),
+        transZ = this.randomRange(transRangeZ[0], transRangeZ[1]);
 
-      //transX = 0; transY = 0; transZ = 0; scaleX = 1; scaleY = 1; scaleZ = 1; angle = 0;
-      transforms.push({
-        scale: {x: scaleX, y: scaleY, z: scaleZ},
-        angle: angle,
-        translate: {x: transX, y: transY, z: transZ},
-      });
+    transform.translate(transX, transY, transZ);
+    transform.rotate(angle, 0, 0, 1);
+    transform.scale(scaleX, scaleY, scaleZ);
 
-      size--;
-    }
-    return transforms;
+    return transform;
   },
 
   // returns random float within given range

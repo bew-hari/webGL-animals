@@ -1,8 +1,8 @@
 function Environment() {
   var groundVertices = makeGroundVertices(),
       mountainVertices = makeMountainVertices(),
-      treeVertices = makeTreeVertices(),
-      rockVertices = makeRockVertices();
+      forestVertices = makeRandomForestVertices(),
+      rockVertices = makeRandomRocksVertices();
 
   var ground = {
     startVertexOffset: 0,
@@ -14,27 +14,27 @@ function Environment() {
     numVertices: mountainVertices.length / FLOATS_PER_VERTEX,
   };
 
-  var tree = {
+  var forest = {
     startVertexOffset: mountain.startVertexOffset + mountain.numVertices,
-    numVertices: treeVertices.length / FLOATS_PER_VERTEX,
+    numVertices: forestVertices.length / FLOATS_PER_VERTEX,
   };
 
   var rock = {
-    startVertexOffset: tree.startVertexOffset + tree.numVertices,
+    startVertexOffset: forest.startVertexOffset + forest.numVertices,
     numVertices: rockVertices.length / FLOATS_PER_VERTEX,
   };
 
   var numElements = 
     groundVertices.length
     + mountainVertices.length
-    + treeVertices.length
+    + forestVertices.length
     + rockVertices.length;
 
   var vertices = new Float32Array(numElements);
 
   vertices.set(groundVertices, 0);
   vertices.set(mountainVertices, mountain.startVertexOffset*FLOATS_PER_VERTEX);
-  vertices.set(treeVertices, tree.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(forestVertices, forest.startVertexOffset*FLOATS_PER_VERTEX);
   vertices.set(rockVertices, rock.startVertexOffset*FLOATS_PER_VERTEX);
   
   // save all properties
@@ -44,7 +44,7 @@ function Environment() {
   this.vertices = vertices;
   this.ground = ground;
   this.mountain = mountain;
-  this.tree = tree;
+  this.forest = forest;
   this.rock = rock;
 }
 
@@ -64,13 +64,13 @@ function makeGroundVertices() {
   for(v=0, j=0; v<2*xcount; v++, j+= FLOATS_PER_VERTEX) {
     if(v%2==0) {  // put even-numbered vertices at (xnow, -xymax, 0)
       vertices[j  ] = -xymax + (v  )*xgap;  // x
-      vertices[j+1] = 0.0;                  // y
-      vertices[j+2] = -xymax;               // z
+      vertices[j+1] = -xymax;               // y
+      vertices[j+2] = 0.0;                  // z
     }
     else {        // put odd-numbered vertices at (xnow, +xymax, 0).
       vertices[j  ] = -xymax + (v-1)*xgap;  // x
-      vertices[j+1] = 0.0;                  // y
-      vertices[j+2] = xymax;                // z
+      vertices[j+1] = xymax;                // y
+      vertices[j+2] = 0.0;                  // z
     }
     vertices[j+3] = 1.0           // w
     vertices[j+4] = xColr[0];     // red
@@ -82,18 +82,45 @@ function makeGroundVertices() {
   for(v=0; v<2*ycount; v++, j+= FLOATS_PER_VERTEX) {
     if(v%2==0) {    // put even-numbered vertices at (-xymax, ynow, 0)
       vertices[j  ] = -xymax;               // x
-      vertices[j+1] = 0.0;                  // y
-      vertices[j+2] = -xymax + (v  )*ygap;  // z
+      vertices[j+1] = -xymax + (v  )*ygap;  // y
+      vertices[j+2] = 0.0;                  // z
     }
     else {          // put odd-numbered vertices at (+xymax, ynow, 0).
       vertices[j  ] = xymax;                // x
-      vertices[j+1] = 0.0;                  // y
-      vertices[j+2] = -xymax + (v-1)*ygap;  // z
+      vertices[j+1] = -xymax + (v-1)*ygap;  // y
+      vertices[j+2] = 0.0;                  // z
     }
     vertices[j+3] = 1.0           // w
     vertices[j+4] = yColr[0];     // red
     vertices[j+5] = yColr[1];     // grn
     vertices[j+6] = yColr[2];     // blu
+  }
+
+  return vertices;
+}
+
+function makeRandomForestVertices() {
+  var numTrees = 100;
+  var treeVertices = makeTreeVertices();
+  var vertices = new Float32Array(treeVertices.length * numTrees);
+
+  for (var t=0, i=0; t<numTrees; t++, i+=treeVertices.length) {
+    var transform = UTILS.makeSceneryTransform(
+      [0.9, 1.1],
+      [0, 360],
+      [-5, 5], [-5, 5], [0, 0]);
+    
+    for (var v=0; v<treeVertices.length; v+=FLOATS_PER_VERTEX) {
+      var originalPos = new Vector4([treeVertices[v], treeVertices[v+1], treeVertices[v+2], treeVertices[v+3]]);
+      var transformedPos = transform.multiplyVector4(originalPos);
+      vertices[i+v] = transformedPos.elements[0];
+      vertices[i+v+1] = transformedPos.elements[1];
+      vertices[i+v+2] = transformedPos.elements[2];
+      vertices[i+v+3] = transformedPos.elements[3];
+      vertices[i+v+4] = treeVertices[v+4];
+      vertices[i+v+5] = treeVertices[v+5];
+      vertices[i+v+6] = treeVertices[v+6];
+    }
   }
 
   return vertices;
@@ -143,7 +170,27 @@ function makeTreeVertices() {
   modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.4, 0.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  return vertices;
+
+  // adjust vertices for smooth concatenation of multiple copies
+  var adjVertices = new Float32Array(vertices.length + 4*FLOATS_PER_VERTEX);
+  
+  // prepend with copy of first vertex
+  for (var j=0; j<FLOATS_PER_VERTEX; j++) {
+    adjVertices[j] = vertices[j];
+  }
+  adjVertices.set(vertices, j);
+
+  // repeat the last vertex
+  for (var j=0, i=vertices.length+FLOATS_PER_VERTEX; j<FLOATS_PER_VERTEX; j++, i++) {
+    adjVertices[i] = vertices[i-FLOATS_PER_VERTEX];
+  }
+
+  // then repeat first vertex twice
+  for (var j=0; j<FLOATS_PER_VERTEX*2; j++, i++) {
+    adjVertices[i] = vertices[j%FLOATS_PER_VERTEX];
+  }
+
+  return adjVertices;
 }
 
 function makeMountainVertices() {
@@ -195,6 +242,33 @@ function makeMountainVertices() {
   return vertices;
 }
 
+function makeRandomRocksVertices() {
+  var numRocks = 100;
+  var rockVertices = makeRockVertices();
+  var vertices = new Float32Array(rockVertices.length * numRocks);
+
+  for (var t=0, i=0; t<numRocks; t++, i+=rockVertices.length) {
+    var transform = UTILS.makeSceneryTransform(
+      [0.1, 0.2],
+      [0, 360],
+      [-5, 5], [-5, 5], [0, 0]);
+    
+    for (var v=0; v<rockVertices.length; v+=FLOATS_PER_VERTEX) {
+      var originalPos = new Vector4([rockVertices[v], rockVertices[v+1], rockVertices[v+2], rockVertices[v+3]]);
+      var transformedPos = transform.multiplyVector4(originalPos);
+      vertices[i+v] = transformedPos.elements[0];
+      vertices[i+v+1] = transformedPos.elements[1];
+      vertices[i+v+2] = transformedPos.elements[2];
+      vertices[i+v+3] = transformedPos.elements[3];
+      vertices[i+v+4] = rockVertices[v+4];
+      vertices[i+v+5] = rockVertices[v+5];
+      vertices[i+v+6] = rockVertices[v+6];
+    }
+  }
+
+  return vertices;
+}
+
 function makeRockVertices() {
   var numCapVertices = 8;
 
@@ -217,5 +291,24 @@ function makeRockVertices() {
   modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.4, 0.0, 1.0, 0.2, 0.4, 0.1);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  return vertices;
+  // adjust vertices for smooth concatenation of multiple copies
+  var adjVertices = new Float32Array(vertices.length + 4*FLOATS_PER_VERTEX);
+  
+  // prepend with copy of first vertex
+  for (var j=0; j<FLOATS_PER_VERTEX; j++) {
+    adjVertices[j] = vertices[j];
+  }
+  adjVertices.set(vertices, j);
+
+  // repeat the last vertex
+  for (var j=0, i=vertices.length+FLOATS_PER_VERTEX; j<FLOATS_PER_VERTEX; j++, i++) {
+    adjVertices[i] = vertices[i-FLOATS_PER_VERTEX];
+  }
+
+  // then repeat first vertex twice
+  for (var j=0; j<FLOATS_PER_VERTEX*2; j++, i++) {
+    adjVertices[i] = vertices[j%FLOATS_PER_VERTEX];
+  }
+
+  return adjVertices;
 }
