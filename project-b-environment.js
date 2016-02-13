@@ -2,7 +2,8 @@ function Environment() {
   var groundVertices = makeGroundVertices(),
       mountainVertices = makeMountainVertices(),
       forestVertices = makeRandomForestVertices(),
-      rockVertices = makeRandomRocksVertices();
+      rockVertices = makeRandomRocksVertices(),
+      foxVertices = makeRandomFoxesVertices();
 
   var ground = {
     startVertexOffset: 0,
@@ -24,11 +25,17 @@ function Environment() {
     numVertices: rockVertices.length / FLOATS_PER_VERTEX,
   };
 
+  var fox = {
+    startVertexOffset: rock.startVertexOffset + rock.numVertices,
+    numVertices: foxVertices.length / FLOATS_PER_VERTEX,
+  };
+
   var numElements = 
     groundVertices.length
     + mountainVertices.length
     + forestVertices.length
-    + rockVertices.length;
+    + rockVertices.length
+    + foxVertices.length;
 
   var vertices = new Float32Array(numElements);
 
@@ -36,6 +43,7 @@ function Environment() {
   vertices.set(mountainVertices, mountain.startVertexOffset*FLOATS_PER_VERTEX);
   vertices.set(forestVertices, forest.startVertexOffset*FLOATS_PER_VERTEX);
   vertices.set(rockVertices, rock.startVertexOffset*FLOATS_PER_VERTEX);
+  vertices.set(foxVertices, fox.startVertexOffset*FLOATS_PER_VERTEX);
   
   // save all properties
   this.numElements = numElements;
@@ -46,6 +54,7 @@ function Environment() {
   this.mountain = mountain;
   this.forest = forest;
   this.rock = rock;
+  this.fox = fox;
 }
 
 function makeGroundVertices() {
@@ -110,17 +119,8 @@ function makeRandomForestVertices() {
       [0, 360],
       [-5, 5], [-5, 5], [0, 0]);
     
-    for (var v=0; v<treeVertices.length; v+=FLOATS_PER_VERTEX) {
-      var originalPos = new Vector4([treeVertices[v], treeVertices[v+1], treeVertices[v+2], treeVertices[v+3]]);
-      var transformedPos = transform.multiplyVector4(originalPos);
-      vertices[i+v] = transformedPos.elements[0];
-      vertices[i+v+1] = transformedPos.elements[1];
-      vertices[i+v+2] = transformedPos.elements[2];
-      vertices[i+v+3] = transformedPos.elements[3];
-      vertices[i+v+4] = treeVertices[v+4];
-      vertices[i+v+5] = treeVertices[v+5];
-      vertices[i+v+6] = treeVertices[v+6];
-    }
+    var result = UTILS.transformVertices(transform, treeVertices);
+    vertices.set(result, i);
   }
 
   return vertices;
@@ -185,7 +185,7 @@ function makeTreeVertices() {
     adjVertices[i] = vertices[i-FLOATS_PER_VERTEX];
   }
 
-  // then repeat first vertex twice
+  // then repeat first vertex twice so copies will link on ground plane (just to be safe)
   for (var j=0; j<FLOATS_PER_VERTEX*2; j++, i++) {
     adjVertices[i] = vertices[j%FLOATS_PER_VERTEX];
   }
@@ -253,17 +253,8 @@ function makeRandomRocksVertices() {
       [0, 360],
       [-5, 5], [-5, 5], [0, 0]);
     
-    for (var v=0; v<rockVertices.length; v+=FLOATS_PER_VERTEX) {
-      var originalPos = new Vector4([rockVertices[v], rockVertices[v+1], rockVertices[v+2], rockVertices[v+3]]);
-      var transformedPos = transform.multiplyVector4(originalPos);
-      vertices[i+v] = transformedPos.elements[0];
-      vertices[i+v+1] = transformedPos.elements[1];
-      vertices[i+v+2] = transformedPos.elements[2];
-      vertices[i+v+3] = transformedPos.elements[3];
-      vertices[i+v+4] = rockVertices[v+4];
-      vertices[i+v+5] = rockVertices[v+5];
-      vertices[i+v+6] = rockVertices[v+6];
-    }
+    var result = UTILS.transformVertices(transform, rockVertices);
+    vertices.set(result, i);
   }
 
   return vertices;
@@ -308,6 +299,303 @@ function makeRockVertices() {
   // then repeat first vertex twice
   for (var j=0; j<FLOATS_PER_VERTEX*2; j++, i++) {
     adjVertices[i] = vertices[j%FLOATS_PER_VERTEX];
+  }
+
+  return adjVertices;
+}
+
+
+
+function makeRandomFoxesVertices() {
+  var numFoxes = 3;
+  var foxVertices = makeStaticFoxVertices();
+  var vertices = new Float32Array(foxVertices.length * numFoxes);
+
+  for (var t=0, i=0; t<numFoxes; t++, i+=foxVertices.length) {
+    var transform = UTILS.makeSceneryTransform(
+      [0.9, 1.1],
+      [0, 360],
+      [-5, 5], [-1, 1], [0, 0]);
+    
+    var result = UTILS.transformVertices(transform, foxVertices);
+    vertices.set(result, i);
+  }
+
+  return vertices;
+}
+
+function makeStaticFoxVertices() {
+  var bodyVertices = makeStaticFoxBody(),
+      earVertices = makeStaticFoxEar(),
+      tailVertices = makeStaticFoxTail(),
+      legVertices = makeStaticFoxLeg();
+
+  var numElements = 
+    bodyVertices.length
+    + earVertices.length * 2
+    + legVertices.length * 4
+    + tailVertices.length;
+
+  var adjVertices = new Float32Array(numElements);
+  var i = 0;
+
+  var transform = new Matrix4();
+
+  // transform then add body
+  adjVertices.set(bodyVertices, i);
+  i += bodyVertices.length;
+
+  // ears
+  transform.setTranslate(0.08, 0.25, 0.7);
+  transform.rotate(-40.0, 0, 0, 1);
+  transform.rotate(20.0, 1, 0, 0);
+  transform.scale(0.15, 0.3, 0.3);
+  adjVertices.set(UTILS.transformVertices(transform, earVertices), i);
+  i += earVertices.length;
+
+  transform.setScale(-1, 1, 1);
+  transform.translate(0.08, 0.25, 0.7);
+  transform.rotate(-40.0, 0, 0, 1);
+  transform.rotate(20.0, 1, 0, 0);
+  transform.scale(0.15, 0.3, 0.3);
+  adjVertices.set(UTILS.transformVertices(transform, earVertices), i);
+  i += earVertices.length;
+
+  // legs
+  transform.setScale(0.7, 0.7, 0.7);
+  transform.translate(0.18, 0.03, 0.35);
+  transform.rotate(90.0, 1, 0, 0);
+  transform.rotate(-90.0, 0, 0, 1);
+  adjVertices.set(UTILS.transformVertices(transform, legVertices), i);
+  i += legVertices.length;
+
+  transform.setScale(-0.7, 0.7, 0.7);
+  transform.translate(0.18, 0.03, 0.35);
+  transform.rotate(90.0, 1, 0, 0);
+  transform.rotate(-90.0, 0, 0, 1);
+  transform.rotate(10.0, 0, 1, 0);
+  adjVertices.set(UTILS.transformVertices(transform, legVertices), i);
+  i += legVertices.length;
+
+  transform.setScale(0.7, 0.7, 0.7);
+  transform.translate(0.13, 0.03, -0.50);
+  transform.rotate(90.0, 1, 0, 0);
+  transform.rotate(-90.0, 0, 0, 1);
+  transform.rotate(5.0, 0, 1, 0);
+  adjVertices.set(UTILS.transformVertices(transform, legVertices), i);
+  i += legVertices.length;
+
+  transform.setScale(-0.7, 0.7, 0.7);
+  transform.translate(0.13, 0.03, -0.50);
+  transform.rotate(90.0, 1, 0, 0);
+  transform.rotate(-90.0, 0, 0, 1);
+  transform.rotate(10.0, 0, 1, 0);
+  adjVertices.set(UTILS.transformVertices(transform, legVertices), i);
+  i += legVertices.length;
+
+  // transform then add the tail
+  transform.setTranslate(0, 0.05, -0.5);
+  transform.rotate(-15.0, 1, 0, 0);
+  adjVertices.set(UTILS.transformVertices(transform, tailVertices), i);
+  i += tailVertices.length;
+  
+  // final transformation on whole fox
+  transform.setRotate(90.0, 1, 0, 0);
+  transform.scale(0.3, 0.3, 0.3);
+  transform.translate(0.0, 0.7, 0.0);
+  return UTILS.transformVertices(transform, adjVertices);
+}
+
+function makeStaticFoxBody() {
+  var numCapVertices = 8;
+  var radius = {
+    nose: 0.04,
+    midSnout: 0.05,
+    snoutHead: 0.1,
+    midHead: 0.15,
+    headNeck: 0.14,
+    neckBody: 0.25,
+    midBody: 0.2,
+    lowerBody: 0.15,
+  };
+
+  // make the body
+  var vertices = new Float32Array((numCapVertices*18) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, 0.0, 0.0);
+  var modB = UTILS.makeModOptions(radius.nose, radius.nose, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.08, 0.93, 0.8, 0.3, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(radius.midSnout, radius.midSnout, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.85, 0.8, 0.3, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  modB = UTILS.makeModOptions(0.8*radius.snoutHead, radius.snoutHead, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.15, 0.78, 0.8, 0.3, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(radius.midHead, radius.midHead, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.18, 0.7, 0.8, 0.3, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  modB = UTILS.makeModOptions(0.8*radius.headNeck, radius.headNeck, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.2, 0.55, 0.75, 0.25, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(0.8*radius.neckBody, radius.neckBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.05, 0.3, 0.8, 0.3, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  modB = UTILS.makeModOptions(0.8*radius.midBody, radius.midBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.8, 0.3, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(radius.lowerBody, radius.lowerBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 0.75, 0.25, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+  
+  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, -0.6, 0.65, 0.15, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  // now do color correction
+  var i = (12 + 2*numCapVertices) * FLOATS_PER_VERTEX;
+  for ( ; i<vertices.length; i+=2*FLOATS_PER_VERTEX*numCapVertices) {
+    vertices[i+4] = 1.0;
+    vertices[i+5] = 1.0;
+    vertices[i+6] = 1.0;
+    if (i + 2*FLOATS_PER_VERTEX*numCapVertices >= vertices.length) {
+      break;
+    } else {
+      vertices[i+11] = 1.0;
+      vertices[i+12] = 1.0;
+      vertices[i+13] = 1.0;
+    }
+  }
+
+  var adjVertices = new Float32Array(vertices.length + 2*FLOATS_PER_VERTEX);
+
+  // prepend with copy of first vertex
+  for (var j=0; j<FLOATS_PER_VERTEX; j++) {
+    adjVertices[j] = vertices[j];
+  }
+  adjVertices.set(vertices, j);
+
+  // append with copy of last vertex
+  for (var j=0, i=vertices.length+FLOATS_PER_VERTEX; j<FLOATS_PER_VERTEX; j++, i++) {
+    adjVertices[i] = vertices[i-FLOATS_PER_VERTEX];
+  }
+
+  return adjVertices;
+}
+
+function makeStaticFoxEar() {
+  var vertices = new Float32Array([
+    0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,
+    0.0, 0.0, -0.3, 1.0, 0.8, 0.3, 0.0,
+    -0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,
+    0.0, 0.5, 0.0, 1.0, 0.8, 0.3, 0.0,
+    0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,
+    0.0, 0.0, -0.3, 1.0, 0.8, 0.3, 0.0,
+  ]);
+
+
+  var adjVertices = new Float32Array(vertices.length + 2*FLOATS_PER_VERTEX);
+
+  // prepend with copy of first vertex
+  for (var j=0; j<FLOATS_PER_VERTEX; j++) {
+    adjVertices[j] = vertices[j];
+  }
+  adjVertices.set(vertices, j);
+
+  // append with copy of last vertex
+  for (var j=0, i=vertices.length+FLOATS_PER_VERTEX; j<FLOATS_PER_VERTEX; j++, i++) {
+    adjVertices[i] = vertices[i-FLOATS_PER_VERTEX];
+  }
+
+  return adjVertices;
+}
+
+function makeStaticFoxTail() {
+  var numCapVertices = 8;
+  var radius = {
+    upperTail: 0.08,
+    midTail: 0.15,
+    lowerTail: 0.1,
+  };
+
+  var vertices = new Float32Array((numCapVertices*8) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  // make the tail
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.7, 0.2, 0.0);
+  var modB = UTILS.makeModOptions(radius.upperTail, radius.upperTail, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.1, 0.7, 0.2, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(radius.midTail, radius.midTail, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 0.8, 0.3, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  modB = UTILS.makeModOptions(radius.lowerTail, radius.lowerTail, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.8, 1.0, 1.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -1.0, 1.0, 1.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+
+  var adjVertices = new Float32Array(vertices.length + 2*FLOATS_PER_VERTEX);
+
+  // prepend with copy of first vertex
+  for (var j=0; j<FLOATS_PER_VERTEX; j++) {
+    adjVertices[j] = vertices[j];
+  }
+  adjVertices.set(vertices, j);
+
+  // append with copy of last vertex
+  for (var j=0, i=vertices.length+FLOATS_PER_VERTEX; j<FLOATS_PER_VERTEX; j++, i++) {
+    adjVertices[i] = vertices[i-FLOATS_PER_VERTEX];
+  }
+
+  return adjVertices;
+}
+
+function makeStaticFoxLeg() {
+  var numCapVertices = 8;
+  var radius = {
+    shoulder: 0.2,
+    knee: 0.07,
+    ankle: 0.05,
+    anklePaw: 0.1,
+    paw: 0.1,
+  };
+
+  // make the upper leg
+  var vertices = new Float32Array((numCapVertices*12) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.05, -0.1, 0.8, 0.3, 0.0);
+  var modB = UTILS.makeModOptions(radius.shoulder, 0.7*radius.shoulder, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.78, 0.28, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(radius.knee, 0.7*radius.knee, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.5, 0.7, 0.2, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  modB = UTILS.makeModOptions(radius.ankle, radius.ankle, 0.0, 0.0, 0.0, 0.0, 1.0, -0.1, 0.0, 0.9, 0.3, 0.1, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(radius.anklePaw, 0.7*radius.anklePaw, 0.0, 0.0, 0.0, 0.0, 1.0, -0.15, 0.0, 0.95, 0.3, 0.1, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+  modB = UTILS.makeModOptions(radius.paw, 0.7*radius.paw, 0.0, 0.0, 0.0, 0.0, 1.0, -0.15, 0.0, 1.0, 0.3, 0.1, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
+
+  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -0.1, 0.0, 1.0, 0.4, 0.15, 0.0);
+  i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
+
+
+  var adjVertices = new Float32Array(vertices.length + 2*FLOATS_PER_VERTEX);
+
+  // prepend with copy of first vertex
+  for (var j=0; j<FLOATS_PER_VERTEX; j++) {
+    adjVertices[j] = vertices[j];
+  }
+  adjVertices.set(vertices, j);
+
+  // append with copy of last vertex
+  for (var j=0, i=vertices.length+FLOATS_PER_VERTEX; j<FLOATS_PER_VERTEX; j++, i++) {
+    adjVertices[i] = vertices[i-FLOATS_PER_VERTEX];
   }
 
   return adjVertices;

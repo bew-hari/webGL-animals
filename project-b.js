@@ -29,7 +29,8 @@ var FSIZE = Float32Array.BYTES_PER_ELEMENT;
 
 var EYE_STEP = 2.0,
     PAN_STEP = 2.0,
-    EAGLE_STEP = 100.0;
+    EAGLE_STEP = 100.0,
+    FOX_LEG_ANGLE_STEP = 150.0;
 
 var globals = {};
 
@@ -42,6 +43,8 @@ function initGlobals() {
     },
     
     eagleStep: EAGLE_STEP,
+    foxUpperLegAngleStep: FOX_LEG_ANGLE_STEP,
+    foxLowerLegAngleStep: FOX_LEG_ANGLE_STEP,
   };
 
   // animation states
@@ -74,11 +77,9 @@ function initGlobals() {
 
     fox: {
       show: true,
-      transforms: UTILS.makeSceneryTransform(
-        [0.5, 1],
-        [0, 360],
-        [-5, 5], [15, 18], [0, 0]
-      ),
+      upperLegAngle: 0.0,
+      lowerLegAngle: 30.0,
+      pawAngle: 0.0,
     },
   };
 
@@ -288,17 +289,16 @@ function draw(gl, canvas, matrices) {
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
   // Pass in the view matrix (+z is up)
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
-
   // modify view matrix with mouse drag quaternion-based rotation 
   // doesn't work; weird stuff happens
   //viewMatrix.concat(state.orientation.mat);
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
   
   // Draw the environment
   drawEnvironment(gl, matrices);
 
   // Draw the models
-  //drawAnimals(gl, matrices);
+  drawAnimals(gl, matrices);
 
   
 }
@@ -321,7 +321,7 @@ function drawEnvironment(gl, matrices) {
     environment.ground.numVertices);
 
   // draw the forest
-  modelMatrix.setTranslate(0.0, 10.0, 0.0);
+  modelMatrix.setTranslate(0.0, 13.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -329,7 +329,7 @@ function drawEnvironment(gl, matrices) {
     environment.forest.numVertices);
 
   // draw the rocks
-  modelMatrix.setTranslate(0.0, 10.0, 0.0);
+  modelMatrix.setTranslate(0.0, 13.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -346,6 +346,12 @@ function drawEnvironment(gl, matrices) {
     environment.mountain.numVertices);
 
   // draw some foxes
+  modelMatrix.setTranslate(0.0, 13.0, 0.0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    environment.startVertexOffset + environment.fox.startVertexOffset,
+    environment.fox.numVertices);
 }
 
 function drawAnimals(gl, matrices) {
@@ -367,26 +373,22 @@ function drawAnimals(gl, matrices) {
 
   pushMatrix(modelMatrix);
 
-//*
   // draw eagle if not hidden by user
   if (state.eagle.show) {
-    modelMatrix.translate(0.0, 0.3, 0.0);
+    modelMatrix.translate(0.0, 0.5, 0.0);
     drawEagle(gl, data.eagle, state.eagle, modelMatrix, u_ModelMatrix);
   }
-//*/
 
-//*
+  modelMatrix = popMatrix();
+
   // draw fox if not hidden by user
   if (state.fox.show) {
     drawFox(gl, data.fox, state.fox, modelMatrix, u_ModelMatrix);
   }
-//*/
 
 }
 
 function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix) {
-
-  //modelMatrix.scale(0.6, 0.6, 0.6);
   
   // BODY
   //=========================================================================//
@@ -464,116 +466,116 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
 }
 
 function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
-  var transforms = state.transforms;
 
-  for (var i=0; i<transforms.length; i++) {
-    var transform = transforms[i];
-    modelMatrix = popMatrix();
-    pushMatrix(modelMatrix);
+  modelMatrix.translate(0.0, 0.19, 0.0);
+  modelMatrix.scale(0.3, 0.3, 0.3);
+  modelMatrix.rotate(5.0, 1, 0, 0);
+  
+  // UPPER HALF
+  //=========================================================================//
+  // upper body
+  modelMatrix.rotate(state.upperLegAngle/6, 1, 0, 0);
+  modelMatrix.translate(0.0, state.upperLegAngle/480, 0.0);
+  pushMatrix(modelMatrix);
 
-    modelMatrix.translate(transform.translate.x, 0.18, transform.translate.y);
-    modelMatrix.scale(0.3, 0.3, 0.3);
-    modelMatrix.rotate(transform.angle, 0, 1, 0);
-    
-    // UPPER HALF
-    //=========================================================================//
-    // upper body
-    pushMatrix(modelMatrix);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    fox.startVertexOffset + fox.upperBody.startVertexOffset,
+    fox.upperBody.numVertices);
 
-    gl.drawArrays(
-      gl.TRIANGLE_STRIP,
-      fox.startVertexOffset + fox.upperBody.startVertexOffset,
-      fox.upperBody.numVertices);
+  // draw the ears
+  pushMatrix(modelMatrix);
+  drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-    // draw the ears
-    pushMatrix(modelMatrix);
-    drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);
+  modelMatrix = popMatrix();
+  pushMatrix(modelMatrix);
+  modelMatrix.scale(-1.0, 1.0, 1.0);
+  drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);  
 
-    modelMatrix = popMatrix();
-    pushMatrix(modelMatrix);
-    modelMatrix.scale(-1.0, 1.0, 1.0);
-    drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);  
+  modelMatrix = popMatrix();
+  modelMatrix.scale(0.7, 0.7, 0.7);
+  pushMatrix(modelMatrix);
 
-    modelMatrix = popMatrix();
-    modelMatrix.scale(0.7, 0.7, 0.7);
-    pushMatrix(modelMatrix);
+  // front right leg
+  drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-    // front right leg
-    drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+  // front left leg
+  modelMatrix = popMatrix();
+  modelMatrix.scale(-1.0, 1.0, 1.0);
+  drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-    // front left leg
-    modelMatrix = popMatrix();
-    modelMatrix.scale(-1.0, 1.0, 1.0);
-    drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+  // LOWER HALF
+  //=========================================================================//
+  // lower body
+  modelMatrix = popMatrix();
+  modelMatrix.translate(0.0, 0.0, 0.03);
+  modelMatrix.rotate(-state.upperLegAngle/3, 1, 0, 0);
+  pushMatrix(modelMatrix);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-    // LOWER HALF
-    //=========================================================================//
-    // lower body
-    modelMatrix = popMatrix();
-    modelMatrix.translate(0.0, 0.0, 0.03);
-    pushMatrix(modelMatrix);
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    fox.startVertexOffset + fox.lowerBody.startVertexOffset,
+    fox.lowerBody.numVertices);
 
-    gl.drawArrays(
-      gl.TRIANGLE_STRIP,
-      fox.startVertexOffset + fox.lowerBody.startVertexOffset,
-      fox.lowerBody.numVertices);
+  // legs
+  modelMatrix.scale(0.7, 0.7, 0.7);
+  modelMatrix.translate(0.0, -0.03, -0.03);
+  pushMatrix(modelMatrix);
 
-    // legs
-    modelMatrix.scale(0.7, 0.7, 0.7);
-    modelMatrix.translate(0.0, -0.03, -0.03);
-    pushMatrix(modelMatrix);
+  // hind right leg
+  modelMatrix = popMatrix();
+  pushMatrix(modelMatrix);
+  drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-    // hind right leg
-    modelMatrix = popMatrix();
-    pushMatrix(modelMatrix);
-    drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+  // hind left leg
+  modelMatrix = popMatrix();
+  modelMatrix.scale(-1.0, 1.0, 1.0);
+  drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
 
-    // hind left leg
-    modelMatrix = popMatrix();
-    modelMatrix.scale(-1.0, 1.0, 1.0);
-    drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+  // TAIL
+  //=========================================================================//
+  modelMatrix = popMatrix();
 
-    // TAIL
-    //=========================================================================//
-    modelMatrix = popMatrix();
+  modelMatrix.translate(0.0, 0.05, -0.5);
+  
+  // upper
+  modelMatrix.rotate(state.lowerLegAngle/3, 1, 0, 0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-    modelMatrix.translate(0.0, 0.05, -0.5);
-    
-    // upper
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    fox.startVertexOffset + fox.upperTail.startVertexOffset,
+    fox.upperTail.numVertices);
 
-    gl.drawArrays(
-      gl.TRIANGLE_STRIP,
-      fox.startVertexOffset + fox.upperTail.startVertexOffset,
-      fox.upperTail.numVertices);
+  // middle
+  modelMatrix.translate(0.0, 0.0, -0.50);
+  modelMatrix.rotate(-state.lowerLegAngle/3, 1, 0, 0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-    // middle
-    modelMatrix.translate(0.0, 0.0, -0.50);
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    fox.startVertexOffset + fox.middleTail.startVertexOffset,
+    fox.middleTail.numVertices);
 
-    gl.drawArrays(
-      gl.TRIANGLE_STRIP,
-      fox.startVertexOffset + fox.middleTail.startVertexOffset,
-      fox.middleTail.numVertices);
+  // lower
+  modelMatrix.translate(0.0, 0.0, -0.3);
+  modelMatrix.rotate(-state.lowerLegAngle/3, 1, 0, 0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-    // lower
-    modelMatrix.translate(0.0, 0.0, -0.3);
-    gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-
-    gl.drawArrays(
-      gl.TRIANGLE_STRIP,
-      fox.startVertexOffset + fox.lowerTail.startVertexOffset,
-      fox.lowerTail.numVertices);
-  }
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    fox.startVertexOffset + fox.lowerTail.startVertexOffset,
+    fox.lowerTail.numVertices);
 }
 
 function drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.translate(0.08, 0.25, 0.7);
   modelMatrix.rotate(-40.0, 0, 0, 1);
   modelMatrix.rotate(20.0, 1, 0, 0);
+  modelMatrix.rotate(-state.upperLegAngle/2, 1, 0, 0);
   modelMatrix.scale(0.15, 0.3, 0.3);
 
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -589,6 +591,7 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(90.0, 1, 0, 0);
   modelMatrix.rotate(-90.0, 0, 0, 1);
   modelMatrix.rotate(15.0, 0, 1, 0);
+  modelMatrix.rotate(state.upperLegAngle, 0, 1, 0);
   
   // upper
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -601,7 +604,7 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // lower
   modelMatrix.translate(0.0, 0.0, 0.5);
   modelMatrix.rotate(-60.0, 0, 1, 0);
-  modelMatrix.rotate(20.0, 0, 1, 0);
+  modelMatrix.rotate(state.lowerLegAngle/1.5, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -612,6 +615,7 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // paw
   modelMatrix.translate(0.0, 0.0, 0.4);
   modelMatrix.rotate(20.0, 0, 1, 0);
+  modelMatrix.rotate(state.pawAngle, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -625,6 +629,7 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(90.0, 1, 0, 0);
   modelMatrix.rotate(-90.0, 0, 0, 1);
   modelMatrix.rotate(20.0, 0, 1, 0);
+  modelMatrix.rotate(-state.upperLegAngle, 0, 1, 0);
   
   // upper
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -637,7 +642,7 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // lower
   modelMatrix.translate(0.0, 0.0, 0.5);
   modelMatrix.rotate(-30.0, 0, 1, 0);
-  modelMatrix.rotate(-25.0, 0, 1, 0);
+  modelMatrix.rotate(-state.lowerLegAngle/1.2, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -647,7 +652,8 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   // paw
   modelMatrix.translate(0.0, 0.0, 0.4);
-  modelMatrix.rotate(30.0, 0, 1, 0);
+  modelMatrix.rotate(20.0, 0, 1, 0);
+  modelMatrix.rotate(state.pawAngle, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   gl.drawArrays(
@@ -688,11 +694,33 @@ function animateAnimals(elapsed) {
 
   if (wingAngle <  -40.0 && rates.eagleStep < 0) 
     rates.eagleStep = -rates.eagleStep/2;
-  
+
   var newWingAngle = wingAngle + (rates.eagleStep * elapsed) / 1000.0;
   state.eagle.wingAngle = newWingAngle % 360;
 
   state.eagle.tailAngle = (newWingAngle % 360) / 3.0;
+
+  // fox leg angle
+  var upperLegAngle = state.fox.upperLegAngle;
+  if (upperLegAngle >   40.0 && rates.foxUpperLegAngleStep > 0) 
+    rates.foxUpperLegAngleStep = -rates.foxUpperLegAngleStep;
+  if (upperLegAngle <  -40.0 && rates.foxUpperLegAngleStep < 0) 
+    rates.foxUpperLegAngleStep = -rates.foxUpperLegAngleStep;
+
+  var newAngle = upperLegAngle + (rates.foxUpperLegAngleStep * elapsed) / 1000.0;
+  newAngle %= 360;
+  state.fox.upperLegAngle = newAngle;
+  state.fox.pawAngle = newAngle / 2 + 30.0;
+
+  var lowerLegAngle = state.fox.lowerLegAngle;
+  if (lowerLegAngle >   40.0 && rates.foxLowerLegAngleStep > 0) 
+    rates.foxLowerLegAngleStep = -rates.foxLowerLegAngleStep;
+  if (lowerLegAngle <  -40.0 && rates.foxLowerLegAngleStep < 0) 
+    rates.foxLowerLegAngleStep = -rates.foxLowerLegAngleStep;
+
+  newAngle = lowerLegAngle + (rates.foxLowerLegAngleStep * elapsed) / 1000.0;
+  newAngle %= 360;
+  state.fox.lowerLegAngle = newAngle;
 }
 
 function animateView(elapsed) {
@@ -712,8 +740,8 @@ function animateView(elapsed) {
   var normalizer = Math.sqrt(eyeStep.right*eyeStep.right + eyeStep.forward*eyeStep.forward);
   normalizer = normalizer == 0 ? 1 : normalizer;
 
-  var dx = (eyeStep.right * right.elements[0] + eyeStep.forward * forward.elements[0]) / normalizer,
-      dy = (eyeStep.right * right.elements[1] + eyeStep.forward * forward.elements[1]) / normalizer,
+  var dx = (eyeStep.right * right.elements[0] + eyeStep.forward * forward.elements[0]) / normalizer * EYE_STEP,
+      dy = (eyeStep.right * right.elements[1] + eyeStep.forward * forward.elements[1]) / normalizer * EYE_STEP,
       dz = (eyeStep.up + eyeStep.forward * forward.elements[2]) / normalizer;
   
   // eye translation

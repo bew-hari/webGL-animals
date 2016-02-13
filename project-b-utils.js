@@ -86,4 +86,22 @@ var UTILS = {
   randomRange: function(low, high) {
     return Math.random() * (high - low) + low;
   },
+
+  transformVertices: function(transform, vertices) {
+    var result = new Float32Array(vertices.length);
+
+    for (var v=0; v<vertices.length; v+=FLOATS_PER_VERTEX) {
+      var originalPos = new Vector4([vertices[v], vertices[v+1], vertices[v+2], vertices[v+3]]);
+      var transformedPos = transform.multiplyVector4(originalPos);
+      result[v] = transformedPos.elements[0];
+      result[v+1] = transformedPos.elements[1];
+      result[v+2] = transformedPos.elements[2];
+      result[v+3] = transformedPos.elements[3];
+      result[v+4] = vertices[v+4];
+      result[v+5] = vertices[v+5];
+      result[v+6] = vertices[v+6];
+    }
+
+    return result;
+  },
 };
