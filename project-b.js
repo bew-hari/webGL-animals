@@ -3,28 +3,39 @@
 var VSHADER_SOURCE =
   'attribute vec4 a_Position;\n' +
   'attribute vec4 a_Color;\n' +
+  'attribute vec4 a_Normal;\n' +
   'uniform mat4 u_ModelMatrix;\n' +
   'uniform mat4 u_ViewMatrix;\n' +
   'uniform mat4 u_ProjMatrix;\n' +
+  'uniform mat4 u_NormalMatrix;\n' +
+  'uniform vec4 u_LightPos;\n' +
   'varying vec4 v_Color;\n' +
+  'varying vec4 v_Norm;\n' +
+  'varying vec4 v_ToLight;\n' +
   'void main() {\n' +
   '  gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n' +
   '  gl_PointSize = 10.0;\n' +
   '  v_Color = a_Color;\n' +
+  '  v_Norm = u_NormalMatrix * a_Normal;\n' +
+  '  v_ToLight = u_LightPos - a_Position;\n' +
   '}\n';
 
 // Fragment shader program
 var FSHADER_SOURCE =
-  '#ifdef GL_ES\n' +
+  //'#ifdef GL_ES\n' +
   'precision mediump float;\n' +
-  '#endif\n' +
+  //'#endif\n' +
   'varying vec4 v_Color;\n' +
+  'varying vec4 v_Norm;\n' + 
+  'varying vec4 v_ToLight;\n' + 
   'void main() {\n' +
+  '  float diff = clamp(dot(normalize(v_Norm), normalize(v_ToLight)), 0.0, 1.0);\n' +
+  '  gl_FragColor = vec4(vec3(v_Color) * diff, 1.0);\n' +
   '  gl_FragColor = v_Color;\n' +
   '}\n';
 
 // constants
-var FLOATS_PER_VERTEX = 7;
+var FLOATS_PER_VERTEX = 12;
 var FSIZE = Float32Array.BYTES_PER_ELEMENT;
 
 var EYE_STEP = 2.0,
@@ -62,6 +73,10 @@ function initGlobals() {
       lookAt: { x: 0.0, y: 0.0, z: 0.0, },
       pan: { horizontal: 0.0, vertical: 0.0, },
       cylinderRadius: 5,
+    },
+
+    light: {
+      pos: { x: 0.0, y: -10.0, z: 10.0, },
     },
 
     orientation: {
@@ -138,7 +153,7 @@ function main() {
 
   gl.enable(gl.DEPTH_TEST);
 
-  // Get storage location of u_ModelMatrix
+  // Get storage location of uniform matrices
   var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
   if (!u_ModelMatrix) {
     console.log('Failed to get the storage location of u_ModelMatrix');
@@ -157,7 +172,20 @@ function main() {
     return;
   }
 
-  var matrices = {
+  var u_NormalMatrix = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
+  if (!u_NormalMatrix) { 
+    console.log('Failed to get u_NormalMatrix');
+    return;
+  }
+
+  // Set the light position
+  var u_LightPos = gl.getUniformLocation(gl.program, 'u_LightPos');
+  if (!u_LightPos) { 
+    console.log('Failed to get u_LightPos');
+    return;
+  }
+
+  var uniforms = {
     u_ModelMatrix: u_ModelMatrix,
     modelMatrix: new Matrix4(),
 
@@ -166,6 +194,11 @@ function main() {
 
     u_ProjMatrix: u_ProjMatrix,
     projMatrix: new Matrix4(),
+
+    u_NormalMatrix: u_NormalMatrix,
+    normalMatrix: new Matrix4(),
+
+    u_LightPos: u_LightPos,
   };
 
   // Start drawing
@@ -174,6 +207,10 @@ function main() {
     
     // Clear <canvas>  colors AND the depth buffer
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Send in light position
+    var lightPos = globals.state.light.pos;
+    gl.uniform4f(u_LightPos, lightPos.x, lightPos.y, lightPos.z, 1);
     
     var eye = globals.state.view.eye,
         lookAt = globals.state.view.lookAt,
@@ -189,13 +226,13 @@ function main() {
                 gl.drawingBufferWidth/2, 
                 gl.drawingBufferHeight);
 
-    matrices.viewMatrix.setLookAt(
+    uniforms.viewMatrix.setLookAt(
       eye.x, eye.y, eye.z,
       lookAt.x, lookAt.y, lookAt.z,
       0, 0, 1);
-    matrices.projMatrix.setPerspective(proj.angle, proj.aspectRatio, proj.near, proj.far);
+    uniforms.projMatrix.setPerspective(proj.angle, proj.aspectRatio, proj.near, proj.far);
 
-    draw(gl, canvas, matrices);
+    draw(gl, canvas, uniforms);
 
     // Right viewport
     // ----------------------------------------------------------------------
@@ -204,15 +241,15 @@ function main() {
                 gl.drawingBufferWidth/2,
                 gl.drawingBufferHeight);
 
-    matrices.viewMatrix.setLookAt(
+    uniforms.viewMatrix.setLookAt(
       eye.x, eye.y, eye.z,
       lookAt.x, lookAt.y, lookAt.z,
       0, 0, 1);
     
     var bounds = proj.near + ((proj.far - proj.near) / 3) * Math.tan(proj.angle/2 * Math.PI/180);
-    matrices.projMatrix.setOrtho(-bounds*proj.aspectRatio, bounds*proj.aspectRatio, -bounds, bounds, proj.near, proj.far);
+    uniforms.projMatrix.setOrtho(-bounds*proj.aspectRatio, bounds*proj.aspectRatio, -bounds, bounds, proj.near, proj.far);
     
-    draw(gl, canvas, matrices);
+    draw(gl, canvas, uniforms);
     
     // request that the browser calls tick
     requestId = requestAnimationFrame(tick, canvas);
@@ -263,7 +300,7 @@ function initVertexBuffers(gl) {
   // Use handle to specify how to retrieve **COLOR** data from our VBO:
   gl.vertexAttribPointer(
     a_Color,        // choose Vertex Shader attribute to fill with data
-    3,              // how many values? 1,2,3 or 4. (we're using R,G,B)
+    4,              // how many values? 1,2,3 or 4. (we're using R,G,B,A)
     gl.FLOAT,       // data type for each value: usually gl.FLOAT
     false,          // did we supply fixed-point data AND it needs normalizing?
     FSIZE * FLOATS_PER_VERTEX,      // Stride -- how many bytes used to store each vertex?
@@ -272,18 +309,35 @@ function initVertexBuffers(gl) {
   gl.enableVertexAttribArray(a_Color);  
                     // Enable assignment of vertex buffer object's position data
 
+  // Assign the buffer object to a_Normal variable
+  var a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');
+  if(a_Normal < 0) {
+    console.log('Failed to get the storage location of a_Normal');
+    return -1;
+  }
+  gl.vertexAttribPointer(
+    a_Normal, 
+    4, 
+    gl.FLOAT, 
+    false, 
+    FSIZE * FLOATS_PER_VERTEX,
+    FSIZE * 8);
+
+  // Enable the assignment to a_Normal variable
+  gl.enableVertexAttribArray(a_Normal);
+
   return vertexBuffer;
 }
 
-function draw(gl, canvas, matrices) {
+function draw(gl, canvas, uniforms) {
   
   var data = globals.data;
   var state = globals.state;
 
-  var u_ViewMatrix = matrices.u_ViewMatrix;
-  var viewMatrix = matrices.viewMatrix;
-  var u_ProjMatrix = matrices.u_ProjMatrix;
-  var projMatrix = matrices.projMatrix;
+  var u_ViewMatrix = uniforms.u_ViewMatrix;
+  var viewMatrix = uniforms.viewMatrix;
+  var u_ProjMatrix = uniforms.u_ProjMatrix;
+  var projMatrix = uniforms.projMatrix;
 
   // Pass in the projection matrix
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
@@ -295,24 +349,24 @@ function draw(gl, canvas, matrices) {
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
   
   // Draw the environment
-  drawEnvironment(gl, matrices);
+  drawEnvironment(gl, uniforms);
 
   // Draw the models
-  drawAnimals(gl, matrices);
-
-  
+  drawAnimals(gl, uniforms); 
 }
 
-function drawEnvironment(gl, matrices) {
+function drawEnvironment(gl, uniforms) {
   var environment = globals.data.environment;
   var state = globals.state;
 
-  var u_ModelMatrix = matrices.u_ModelMatrix;
-  var modelMatrix = matrices.modelMatrix;
+  var u_ModelMatrix = uniforms.u_ModelMatrix;
+  var modelMatrix = uniforms.modelMatrix;
 
-  // Reset the model matrix and set up the view matrix for the environment
+  // Set modelMatrix and pass it into vertex shader
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  updateNormals(gl, uniforms);
 
   // draw the ground
   gl.drawArrays(
@@ -340,6 +394,7 @@ function drawEnvironment(gl, matrices) {
   modelMatrix.setTranslate(-1.5, 23.0, 0.0);
   modelMatrix.scale(10.0, 10.0, 5.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     environment.startVertexOffset + environment.mountain.startVertexOffset,
@@ -354,13 +409,16 @@ function drawEnvironment(gl, matrices) {
     environment.fox.numVertices);
 }
 
-function drawAnimals(gl, matrices) {
+function drawAnimals(gl, uniforms) {
   var data = globals.data;
   var state = globals.state;
   var mouse = globals.mouse;
 
-  var u_ModelMatrix = matrices.u_ModelMatrix;
-  var modelMatrix = matrices.modelMatrix;
+  var u_ModelMatrix = uniforms.u_ModelMatrix;
+  var modelMatrix = uniforms.modelMatrix;
+
+  var u_NormalMatrix = uniforms.u_NormalMatrix;
+  var normalMatrix = uniforms.normalMatrix;
 
   // init the model matrix
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
@@ -376,26 +434,29 @@ function drawAnimals(gl, matrices) {
   // draw eagle if not hidden by user
   if (state.eagle.show) {
     modelMatrix.translate(0.0, 0.5, 0.0);
-    drawEagle(gl, data.eagle, state.eagle, modelMatrix, u_ModelMatrix);
+    drawEagle(gl, data.eagle, state.eagle, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
   }
 
   modelMatrix = popMatrix();
 
   // draw fox if not hidden by user
   if (state.fox.show) {
-    drawFox(gl, data.fox, state.fox, modelMatrix, u_ModelMatrix);
+    drawFox(gl, data.fox, state.fox, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
   }
 
 }
 
-function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix) {
-  
+function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
+
   // BODY
   //=========================================================================//
   modelMatrix.scale(0.2, 0.2, 0.2);
   modelMatrix.translate(0.0, -state.wingAngle / 360, 0.0);
-
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   // save for later use
   pushMatrix(modelMatrix);
@@ -410,6 +471,10 @@ function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(state.tailAngle, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     eagle.startVertexOffset + eagle.tail.startVertexOffset,
@@ -422,20 +487,23 @@ function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix) {
   pushMatrix(modelMatrix);
 
   // right wing
-  drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix);
+  drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 
   // left wing
   modelMatrix = popMatrix();
   modelMatrix.scale(-1.0, 1.0, 1.0);
-  drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix);
+  drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 }
 
-function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
+function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
   // upper wing
   modelMatrix.translate(0.02, 0.0, 0.0);
   modelMatrix.rotate(state.wingAngle, 0, 0, 1);
-
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -445,8 +513,11 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
   // middle wing
   modelMatrix.translate(0.24, 0.0, 0.0);
   modelMatrix.rotate(state.wingAngle*0.8, 0, 0, 1);
-
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -456,8 +527,11 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
   // lower wing
   modelMatrix.translate(0.29, 0.0, 0.0);
   modelMatrix.rotate(state.wingAngle/1.5, 0, 0, 1);
-
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -465,7 +539,7 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix) {
     eagle.lowerWing.numVertices);
 }
 
-function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
+function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
 
   modelMatrix.translate(0.0, 0.19, 0.0);
   modelMatrix.scale(0.3, 0.3, 0.3);
@@ -480,6 +554,10 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     fox.startVertexOffset + fox.upperBody.startVertexOffset,
@@ -487,24 +565,24 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   // draw the ears
   pushMatrix(modelMatrix);
-  drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);
+  drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 
   modelMatrix = popMatrix();
   pushMatrix(modelMatrix);
   modelMatrix.scale(-1.0, 1.0, 1.0);
-  drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix);  
+  drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 
   modelMatrix = popMatrix();
   modelMatrix.scale(0.7, 0.7, 0.7);
   pushMatrix(modelMatrix);
 
   // front right leg
-  drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+  drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 
   // front left leg
   modelMatrix = popMatrix();
   modelMatrix.scale(-1.0, 1.0, 1.0);
-  drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+  drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 
   // LOWER HALF
   //=========================================================================//
@@ -514,6 +592,10 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(-state.upperLegAngle/3, 1, 0, 0);
   pushMatrix(modelMatrix);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -528,12 +610,12 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
   // hind right leg
   modelMatrix = popMatrix();
   pushMatrix(modelMatrix);
-  drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+  drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 
   // hind left leg
   modelMatrix = popMatrix();
   modelMatrix.scale(-1.0, 1.0, 1.0);
-  drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix);
+  drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 
   // TAIL
   //=========================================================================//
@@ -545,6 +627,10 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(state.lowerLegAngle/3, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     fox.startVertexOffset + fox.upperTail.startVertexOffset,
@@ -554,6 +640,10 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.translate(0.0, 0.0, -0.50);
   modelMatrix.rotate(-state.lowerLegAngle/3, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -565,13 +655,17 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(-state.lowerLegAngle/3, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     fox.startVertexOffset + fox.lowerTail.startVertexOffset,
     fox.lowerTail.numVertices);
 }
 
-function drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix) {
+function drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
   modelMatrix.translate(0.08, 0.25, 0.7);
   modelMatrix.rotate(-40.0, 0, 0, 1);
   modelMatrix.rotate(20.0, 1, 0, 0);
@@ -580,13 +674,17 @@ function drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix) {
 
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     fox.startVertexOffset + fox.ear.startVertexOffset,
     fox.ear.numVertices);
 }
 
-function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
+function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
   modelMatrix.translate(0.18, 0.05, 0.35);
   modelMatrix.rotate(90.0, 1, 0, 0);
   modelMatrix.rotate(-90.0, 0, 0, 1);
@@ -595,6 +693,10 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   
   // upper
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -607,6 +709,10 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(state.lowerLegAngle/1.5, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     fox.startVertexOffset + fox.lowerLeg.startVertexOffset,
@@ -618,13 +724,17 @@ function drawFoxFrontLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(state.pawAngle, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     fox.startVertexOffset + fox.paw.startVertexOffset,
     fox.paw.numVertices);
 }
 
-function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
+function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
   modelMatrix.translate(0.13, 0.03, -0.45);
   modelMatrix.rotate(90.0, 1, 0, 0);
   modelMatrix.rotate(-90.0, 0, 0, 1);
@@ -633,6 +743,10 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   
   // upper
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -645,6 +759,10 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(-state.lowerLegAngle/1.2, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
     fox.startVertexOffset + fox.lowerLeg.startVertexOffset,
@@ -655,6 +773,10 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix) {
   modelMatrix.rotate(20.0, 0, 1, 0);
   modelMatrix.rotate(state.pawAngle, 0, 1, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -759,6 +881,19 @@ function animateView(elapsed) {
   lookAt.x = eye.x + Math.sin(pan.horizontal*Math.PI/180)*cylinderRadius;
   lookAt.y = eye.y + Math.cos(pan.horizontal*Math.PI/180)*cylinderRadius;
   lookAt.z = eye.z + pan.vertical;
+}
+
+
+function updateNormals(gl, uniforms) {
+  var modelMatrix = uniforms.modelMatrix;
+
+  var u_NormalMatrix = uniforms.u_NormalMatrix;
+  var normalMatrix = uniforms.normalMatrix;
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 }
 
 // HTML elements functions
