@@ -2,9 +2,13 @@ var UTILS = {
   makeTube: function(numCapVertices, data, offset, mod) {
     var i = offset;
 
-    var pos = new Vector4(),
-        norm = new Vector4();
+    var pos = new Vector4(), pos1 = new Vector4(),
+        norm = new Vector4(),
+        tangent = new Vector4(),
+        surface = new Vector4();
 
+    var normTransform = new Matrix4();
+//*
     for (var v=0; v<numCapVertices*2; v++, i+=FLOATS_PER_VERTEX) {
       if (v%2 == 0) {
         
@@ -16,7 +20,10 @@ var UTILS = {
         );
 
         var transformedPos = mod[0].posTransform.multiplyVector4(pos);
-        var transformedNorm = mod[0].normTransform.multiplyVector4(pos);
+        
+        normTransform.setInverseOf(mod[0].posTransform);
+        normTransform.transpose();
+        var transformedNorm = normTransform.multiplyVector4(pos);
 
         data[i] = transformedPos.elements[0];
         data[i+1] = transformedPos.elements[1];
@@ -50,7 +57,10 @@ var UTILS = {
         );
 
         var transformedPos = mod[1].posTransform.multiplyVector4(pos);
-        var transformedNorm = mod[1].normTransform.multiplyVector4(norm);
+        
+        normTransform.setInverseOf(mod[1].posTransform);
+        normTransform.transpose();
+        var transformedNorm = normTransform.multiplyVector4(norm);
 
         data[i] = transformedPos.elements[0];
         data[i+1] = transformedPos.elements[1];
@@ -69,7 +79,69 @@ var UTILS = {
 
       }
     }
+//*/
+/*  alternate normal vector calculations (not working for some objects)
+    for (var v=0; v<numCapVertices; v++, i+=FLOATS_PER_VERTEX*2) {
+      pos.set(
+        Math.cos(2*Math.PI*(v)/numCapVertices),
+        Math.sin(2*Math.PI*(v)/numCapVertices),
+        0.0,
+        1.0
+      );
 
+      var transformedPos = mod[0].posTransform.multiplyVector4(pos);
+
+      pos1.set(
+        Math.cos(2*Math.PI*(v)/numCapVertices),
+        Math.sin(2*Math.PI*(v)/numCapVertices),
+        1.0,
+        1.0
+      );
+
+      var transformedPos1 = mod[1].posTransform.multiplyVector4(pos1);
+      
+      tangent.set(
+        -Math.sin(2*Math.PI*(v)/numCapVertices),
+        Math.cos(2*Math.PI*(v)/numCapVertices),
+        0.0,
+        1.0
+      );
+
+      surface.copy(transformedPos1.subtract(transformedPos));
+      norm.copy(surface.cross(tangent));
+
+      // set the vertex data
+      data[i] = transformedPos.elements[0];
+      data[i+1] = transformedPos.elements[1];
+      data[i+2] = transformedPos.elements[2];
+      data[i+3] = transformedPos.elements[3];
+
+      data[i+4] = mod[0].color.r;
+      data[i+5] = mod[0].color.g;
+      data[i+6] = mod[0].color.b;
+      data[i+7] = mod[0].color.a;
+
+      data[i+8] = norm.elements[0];
+      data[i+9] = norm.elements[1];
+      data[i+10] = norm.elements[2];
+      data[i+11] = norm.elements[3];
+
+      data[i+FLOATS_PER_VERTEX] = transformedPos1.elements[0];
+      data[i+FLOATS_PER_VERTEX+1] = transformedPos1.elements[1];
+      data[i+FLOATS_PER_VERTEX+2] = transformedPos1.elements[2];
+      data[i+FLOATS_PER_VERTEX+3] = transformedPos1.elements[3];
+
+      data[i+FLOATS_PER_VERTEX+4] = mod[1].color.r;
+      data[i+FLOATS_PER_VERTEX+5] = mod[1].color.g;
+      data[i+FLOATS_PER_VERTEX+6] = mod[1].color.b;
+      data[i+FLOATS_PER_VERTEX+7] = mod[1].color.a;
+
+      data[i+FLOATS_PER_VERTEX+8] = norm.elements[0];
+      data[i+FLOATS_PER_VERTEX+9] = norm.elements[1];
+      data[i+FLOATS_PER_VERTEX+10] = norm.elements[2];
+      data[i+FLOATS_PER_VERTEX+11] = norm.elements[3];
+    }
+//*/
     return i;
   },
 

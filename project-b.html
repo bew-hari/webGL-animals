@@ -12,27 +12,32 @@
 
     <div style="float:left; width:500px; margin-left:20px;">
       <div>
-        <h2>Project A: Low-poly Animals</h2>
+        <h2>Project B: A World to Explore</h2>
         <p>
           Hi! I'm Bew, and to the left you can see my eagle and fox. The scene 
           is currently set to load with the animals directly facing you. However, 
           you can interact with them with the following controls:
         </p>
-        <ol>
+        <ul>
           <li>
-            Drag anywhere within the canvas to rotate the animals around.
+            A/D: move sideways, perpendicular to direction of sight
           </li>
           <li>
-            Use the keyboard arrow keys to move the animals around on the canvas.
+            W/S: move up or down, in absolute z coordinates
           </li>
           <li>
-            Click anywhere in the canvas to randomly change the color of the
-            animals.
+            Q/E: move backward or forward in the direction of sight
           </li>
           <li>
-            Press spacebar to play/pause all animations.
+            Left/right arrow: pan sideways
           </li>
-        </ol>
+          <li>
+            Up/down arrow: pan up or down
+          </li>
+          <li>
+            Spacebar: play/pause all animations.
+          </li>
+        </ul>
       </div>
       <div>
         Show/Hide:
@@ -67,6 +72,12 @@
         </small>
       </div>
       <br>-->
+      <!--<div>
+        x: <input type="number"
+                  id="light-x" 
+                  onchange="updateAutoRecolorInterval(this.value)">
+      </div>
+      <br>-->
       <div>
         <button onclick="play()">Play</button>
         <button onclick="pause()">Pause</button>
@@ -75,8 +86,7 @@
         <small style="color:#777;">
           Use these buttons to play, pause, or reset. The play and pause
           buttons have the same effect as the pressing the spacebar. The 
-          reset button resets all animations to the beginning state (does
-          not reset the color, however).
+          reset button resets all animations to the beginning state.
         </small>
       </div>
     </div>

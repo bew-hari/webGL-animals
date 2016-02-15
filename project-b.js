@@ -17,7 +17,7 @@ var VSHADER_SOURCE =
   '  gl_PointSize = 10.0;\n' +
   '  v_Color = a_Color;\n' +
   '  v_Norm = u_NormalMatrix * a_Normal;\n' +
-  '  v_ToLight = u_LightPos - a_Position;\n' +
+  '  v_ToLight = u_LightPos - u_ModelMatrix * a_Position;\n' +
   '}\n';
 
 // Fragment shader program
@@ -29,8 +29,9 @@ var FSHADER_SOURCE =
   'varying vec4 v_Norm;\n' + 
   'varying vec4 v_ToLight;\n' + 
   'void main() {\n' +
+  '  vec4 dirLight = vec4(0, 0, 10, 0);\n' + 
   '  float diff = clamp(dot(normalize(v_Norm), normalize(v_ToLight)), 0.0, 1.0);\n' +
-  '  gl_FragColor = vec4(vec3(v_Color) * diff, 1.0);\n' +
+  '  gl_FragColor = vec4(vec3(v_Color) * (0.3 + 0.7*diff), 1.0);\n' +
   //'  gl_FragColor = v_Color;\n' +
   '}\n';
 
@@ -76,7 +77,7 @@ function initGlobals() {
     },
 
     light: {
-      pos: { x: 0.0, y: -10.0, z: 10.0, },
+      pos: { x: 0.0, y: 5.0, z: 0.0, },
     },
 
     orientation: {
@@ -390,6 +391,14 @@ function drawEnvironment(gl, uniforms) {
     environment.startVertexOffset + environment.rock.startVertexOffset,
     environment.rock.numVertices);
 
+  // draw some foxes
+  modelMatrix.setTranslate(0.0, 13.0, 0.0);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    environment.startVertexOffset + environment.fox.startVertexOffset,
+    environment.fox.numVertices);
+
   // draw the mountain
   modelMatrix.setTranslate(-1.5, 23.0, 0.0);
   modelMatrix.scale(10.0, 10.0, 5.0);
@@ -399,14 +408,6 @@ function drawEnvironment(gl, uniforms) {
     gl.TRIANGLE_STRIP,
     environment.startVertexOffset + environment.mountain.startVertexOffset,
     environment.mountain.numVertices);
-
-  // draw some foxes
-  modelMatrix.setTranslate(0.0, 13.0, 0.0);
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-  gl.drawArrays(
-    gl.TRIANGLE_STRIP,
-    environment.startVertexOffset + environment.fox.startVertexOffset,
-    environment.fox.numVertices);
 }
 
 function drawAnimals(gl, uniforms) {

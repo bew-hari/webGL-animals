@@ -253,7 +253,7 @@ function makeMountainVertices() {
 }
 
 function makeRandomRocksVertices() {
-  var numRocks = 0;
+  var numRocks = 100;
   var rockVertices = makeRockVertices();
   var vertices = new Float32Array(rockVertices.length * numRocks);
 
