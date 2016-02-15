@@ -69,26 +69,26 @@ function makeEagleBody() {
   var vertices = new Float32Array((numCapVertices*14) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, -0.08, 1.0, 1.0, 0.8, 0.0, 1.0);
-  var modB = UTILS.makeModOptions(radius.midBeak, radius.midBeak, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, -0.02, 0.92, 1.0, 0.8, 0.0, 1.0);
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, -0.08, 1.0, 1.0, 0.8, 0.0, 1.0);
+  var modB = UTILS.makeCapOptions(radius.midBeak, radius.midBeak, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, -0.02, 0.92, 1.0, 0.8, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.beakHead, radius.beakHead, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.8, 1.0, 1.0, 1.0, 1.0);
+  modA = UTILS.makeCapOptions(radius.beakHead, radius.beakHead, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.8, 1.0, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.midHead, radius.midHead, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.6, 0.8, 0.8, 0.8, 1.0);
+  modB = UTILS.makeCapOptions(radius.midHead, radius.midHead, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.6, 0.8, 0.8, 0.8, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.headBody, radius.headBody, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, -0.03, 0.4, 0.5, 0.4, 0.2, 1.0);
+  modA = UTILS.makeCapOptions(radius.headBody, radius.headBody, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, -0.03, 0.4, 0.5, 0.4, 0.2, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.midBody, 0.8*radius.midBody, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, -0.05, 0.0, 0.5, 0.4, 0.2, 1.0);
+  modB = UTILS.makeCapOptions(radius.midBody, 0.8*radius.midBody, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, -0.05, 0.0, 0.5, 0.4, 0.2, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.endBody, 0.5*radius.endBody, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.5, 0.4, 0.3, 0.1, 1.0);
+  modA = UTILS.makeCapOptions(radius.endBody, 0.5*radius.endBody, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.5, 0.4, 0.3, 0.1, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.5, 0.5, 0.4, 0.2, 1.0);
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.5, 0.5, 0.4, 0.2, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
   return vertices;
@@ -99,66 +99,67 @@ function makeEagleTail() {
   var vertices = new Float32Array((numCapVertices*8) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.4, 0.3, 0.1, 1.0);
-  var modB = UTILS.makeModOptions(0.1, 0.05, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.4, 0.3, 0.1, 1.0);
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.4, 0.3, 0.1, 1.0);
+  var modB = UTILS.makeCapOptions(0.1, 0.05, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.4, 0.3, 0.1, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.4, 0.03, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.25, 0.5, 0.4, 0.2, 1.0);
+  modA = UTILS.makeCapOptions(0.4, 0.03, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.25, 0.5, 0.4, 0.2, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.8, 0.02, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.6, 0.8, 0.8, 0.8, 1.0);
+  modB = UTILS.makeCapOptions(0.8, 0.02, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.6, 0.8, 0.8, 0.8, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.65, 1.0, 1.0, 1.0, 1.0);
+  modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.65, 1.0, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
   return vertices;
 }
 
 function makeEagleWing() {
+  var numCapVertices = 4;
+  
+  // make the upper wing
+  var upperVertices = new Float32Array((numCapVertices*6) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5, 0.4, 0.2, 1.0);
+  var modB = UTILS.makeCapOptions(0.14, 0.04, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5, 0.4, 0.2, 1.0);
+  i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
+
+  modA = UTILS.makeCapOptions(0.17, 0.03, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.25, 0.5, 0.4, 0.2, 1.0);
+  i = UTILS.makeTube(numCapVertices, upperVertices, i, [modB, modA]);
+
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.25, 0.5, 0.4, 0.2, 1.0);
+  i = UTILS.makeTube(numCapVertices, upperVertices, i, [modA, modB]);
+
+  // make the middle wing
+  var middleVertices = new Float32Array((numCapVertices*6) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5, 0.4, 0.2, 1.0);
+  var modB = UTILS.makeCapOptions(0.17, 0.03, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.5, 0.4, 0.2, 1.0);
+  i = UTILS.makeTube(numCapVertices, middleVertices, i, [modA, modB]);
+
+  modA = UTILS.makeCapOptions(0.16, 0.02, 0.0, 0.0, 0.0, 0.0, 1.0, -0.08, 0.0, 0.3, 0.5, 0.4, 0.2, 1.0);
+  i = UTILS.makeTube(numCapVertices, middleVertices, i, [modB, modA]);
+
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -0.08, 0.0, 0.3, 0.5, 0.4, 0.2, 1.0);
+  i = UTILS.makeTube(numCapVertices, middleVertices, i, [modA, modB]);
+
+  // make the lower wing
+  var lowerVertices = new Float32Array((numCapVertices*4) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -0.08, 0.0, 0.0, 0.5, 0.4, 0.2, 1.0);
+  var modB = UTILS.makeCapOptions(0.16, 0.02, 0.0, 0.0, 0.0, 0.0, 1.0, -0.08, 0.0, 0.0, 0.5, 0.4, 0.2, 1.0);
+  i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modA, modB]);
+
+  modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.15, 0.0, 0.4, 0.5, 0.4, 0.2, 1.0);
+  i = UTILS.makeTube(numCapVertices, lowerVertices, i, [modB, modA]);
+
   return {
-    upper: new Float32Array([
-      0.0, 0.0, -0.14, 1.0, 0.4, 0.3, 0.1, 1.0,     0.0, 0.0, -1.0, 1.0,
-      0.0, 0.0, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,      -1.0, 0.0, 0.0, 1.0,
-      0.0, 0.04, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 1.0, 0.0, 1.0,
-      0.0, 0.0, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,      -1.0, 0.0, 0.0, 1.0,
-      0.0, 0.0, 0.14, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 0.0, 1.0, 1.0,
-      0.0, 0.0, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,      -1.0, 0.0, 0.0, 1.0,
-      0.0, -0.04, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,     0.0, -1.0, 0.0, 1.0,
-
-      0.0, 0.0, -0.14, 1.0, 0.4, 0.3, 0.1, 1.0,     0.0, 0.0, -1.0, 1.0,
-      0.25, 0.0, -0.17, 1.0, 0.4, 0.3, 0.1, 1.0,    0.0, 0.0, -1.0, 1.0,
-      0.0, 0.04, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 1.0, 0.0, 1.0,
-      0.25, 0.03, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,     0.0, 1.0, 0.0, 1.0,
-      0.0, 0.0, 0.17, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 0.0, 1.0, 1.0,
-      0.25, 0.0, 0.17, 1.0, 0.5, 0.4, 0.2, 1.0,     0.0, 0.0, 1.0, 1.0,
-      0.0, -0.04, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,     0.0, -1.0, 0.0, 1.0,
-      0.25, -0.03, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,    0.0, -1.0, 0.0, 1.0,
-      0.25, 0.0, -0.17, 1.0, 0.4, 0.3, 0.1, 1.0,    0.0, 0.0, -1.0, 1.0,
-    ]),
-
-    middle: new Float32Array([
-      0.0, 0.0, -0.17, 1.0, 0.4, 0.3, 0.1, 1.0,     0.0, 0.0, -1.0, 1.0,
-      0.3, 0.0, -0.1, 1.0, 0.4, 0.3, 0.1, 1.0,      0.0, 0.0, -1.0, 1.0,
-      0.0, 0.03, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 1.0, 0.0, 1.0,
-      0.3, 0.02, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 1.0, 0.0, 1.0,
-      0.0, 0.0, 0.17, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 0.0, 1.0, 1.0,
-      0.3, 0.0, 0.23, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 0.0, 1.0, 1.0,
-      0.0, -0.03, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,     0.0, -1.0, 0.0, 1.0,
-      0.3, -0.02, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,     0.0, -1.0, 0.0, 1.0,
-      0.0, 0.0, -0.17, 1.0, 0.4, 0.3, 0.1, 1.0,     0.0, 0.0, -1.0, 1.0,
-      0.3, 0.0, -0.1, 1.0, 0.4, 0.3, 0.1, 1.0,      0.0, 0.0, -1.0, 1.0,
-    ]),
-    lower: new Float32Array([
-      0.0, 0.0, -0.1, 1.0, 0.4, 0.3, 0.1, 1.0,      0.0, 0.0, -1.0, 1.0,
-      0.4, 0.0, -0.11, 1.0, 0.4, 0.3, 0.1, 1.0,     0.0, 0.0, -1.0, 1.0,
-      0.0, 0.02, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 1.0, 0.0, 1.0,
-      0.4, 0.0, -0.11, 1.0, 0.4, 0.3, 0.1, 1.0,     0.0, 1.0, 0.0, 1.0,
-      0.0, 0.0, 0.23, 1.0, 0.5, 0.4, 0.2, 1.0,      0.0, 0.0, 1.0, 1.0,
-      0.4, 0.0, -0.11, 1.0, 0.4, 0.3, 0.1, 1.0,     0.0, 0.0, 1.0, 1.0,
-      0.0, -0.02, 0.0, 1.0, 0.5, 0.4, 0.2, 1.0,     0.0, -1.0, 0.0, 1.0,
-      0.4, 0.0, -0.11, 1.0, 0.4, 0.3, 0.1, 1.0,     0.0, -1.0, 0.0, 1.0,
-      0.0, 0.0, -0.1, 1.0, 0.4, 0.3, 0.1, 1.0,      0.0, 0.0, -1.0, 1.0,
-    ]),
+    upper: upperVertices,
+    middle: middleVertices,
+    lower: lowerVertices,
   };
 }

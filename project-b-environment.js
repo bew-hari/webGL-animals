@@ -85,7 +85,7 @@ function makeGroundVertices() {
     vertices[j+4] = xColr[0];     // red
     vertices[j+5] = xColr[1];     // grn
     vertices[j+6] = xColr[2];     // blu
-    vertices[j+7] = xColr[3];     // alpha
+    vertices[j+7] = xColr[3];     // alpha? or saturation?
     vertices[j+8] = 0.0;          // normal x
     vertices[j+9] = 0.0;          // normal y
     vertices[j+10] = 1.0;         // normal z
@@ -108,7 +108,7 @@ function makeGroundVertices() {
     vertices[j+4] = yColr[0];     // red
     vertices[j+5] = yColr[1];     // grn
     vertices[j+6] = yColr[2];     // blu
-    vertices[j+7] = yColr[3];     // alpha
+    vertices[j+7] = yColr[3];     // alpha? or saturation?
     vertices[j+8] = 0.0;          // normal x
     vertices[j+9] = 0.0;          // normal y
     vertices[j+10] = 1.0;         // normal z
@@ -152,32 +152,32 @@ function makeTreeVertices() {
   var vertices = new Float32Array((numCapVertices*18) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.25, 0.1, 0.0, 1.0);
-  var modB = UTILS.makeModOptions(radius.lowerTrunk, radius.lowerTrunk, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.25, 0.1, 0.0, 1.0);
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.25, 0.1, 0.0, 1.0);
+  var modB = UTILS.makeCapOptions(radius.lowerTrunk, radius.lowerTrunk, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.25, 0.1, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.middleTrunk, radius.middleTrunk, 0.0, 10.0, 1.0, 1.0, -0.02, -0.01, 0.0, 0.15, 0.4, 0.2, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(radius.middleTrunk, radius.middleTrunk, 0.0, 10.0, 1.0, 1.0, -0.02, -0.01, 0.0, 0.15, 0.4, 0.2, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.upperTrunk, radius.upperTrunk, 0.0, 0.0, 0.0, 0.0, 1.0, 0.02, 0.0, 0.4, 0.45, 0.25, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(radius.upperTrunk, radius.upperTrunk, 0.0, 0.0, 0.0, 0.0, 1.0, 0.02, 0.0, 0.4, 0.45, 0.25, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.lowerLeavesBottom, radius.lowerLeavesBottom, 0.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.27, 0.0, 0.6, 0.2, 1.0);
+  modA = UTILS.makeCapOptions(radius.lowerLeavesBottom, radius.lowerLeavesBottom, 0.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.27, 0.0, 0.6, 0.2, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.lowerLeavesTop, radius.lowerLeavesTop, 0.0, 0.0, 0.0, 0.0, 1.0, 0.01, 0.0, 0.55, 0.0, 0.4, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(radius.lowerLeavesTop, radius.lowerLeavesTop, 0.0, 0.0, 0.0, 0.0, 1.0, 0.01, 0.0, 0.55, 0.0, 0.4, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.middleLeavesBottom, radius.middleLeavesBottom, 0.0, 0.0, 0.0, 0.0, 1.0, 0.01, 0.0, 0.5, 0.0, 0.6, 0.2, 1.0);
+  modA = UTILS.makeCapOptions(radius.middleLeavesBottom, radius.middleLeavesBottom, 0.0, 0.0, 0.0, 0.0, 1.0, 0.01, 0.0, 0.5, 0.0, 0.6, 0.2, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.middleLeavesTop, radius.middleLeavesTop, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.8, 0.0, 0.4, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(radius.middleLeavesTop, radius.middleLeavesTop, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.8, 0.0, 0.4, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.upperLeavesBottom, radius.upperLeavesBottom, 0.0, -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 0.7, 0.0, 0.6, 0.2, 1.0);
+  modA = UTILS.makeCapOptions(radius.upperLeavesBottom, radius.upperLeavesBottom, 0.0, -1.0, 0.5, 1.0, 0.0, 0.0, 0.0, 0.7, 0.0, 0.6, 0.2, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.4, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.4, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
 
@@ -209,44 +209,44 @@ function makeMountainVertices() {
   var vertices = new Float32Array((numCapVertices*24) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.03, 0.02, 1.0, 1.0, 1.0, 1.0, 1.0);
-  var modB = UTILS.makeModOptions(0.05, 0.05, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.98, 1.0, 1.0, 1.0, 1.0);
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.03, 0.02, 1.0, 1.0, 1.0, 1.0, 1.0);
+  var modB = UTILS.makeCapOptions(0.05, 0.05, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.98, 1.0, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.2, 0.2, 0.0, -5.0, 0.0, 1.0, 0.0, -0.01, -0.02, 0.75, 0.5, 0.5, 0.7, 1.0);
+  modA = UTILS.makeCapOptions(0.2, 0.2, 0.0, -5.0, 0.0, 1.0, 0.0, -0.01, -0.02, 0.75, 0.5, 0.5, 0.7, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.3, 0.3, 0.0, 0.0, 0.0, 0.0, 1.0, -0.02, -0.03, 0.55, 0.4, 0.4, 0.6, 1.0);
+  modB = UTILS.makeCapOptions(0.3, 0.3, 0.0, 0.0, 0.0, 0.0, 1.0, -0.02, -0.03, 0.55, 0.4, 0.4, 0.6, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.4, 0.4, 0.0, -10.0, 0.0, 1.0, 0.0, 0.02, 0.02, 0.3, 0.25, 0.25, 0.4, 1.0);
+  modA = UTILS.makeCapOptions(0.4, 0.4, 0.0, -10.0, 0.0, 1.0, 0.0, 0.02, 0.02, 0.3, 0.25, 0.25, 0.4, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.3, 1.0);
+  modB = UTILS.makeCapOptions(0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.3, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.3, 1.0);
+  modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.3, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
 
   // second mountain a little smaller
-  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 0.2, 0.2, 0.3, 1.0);
-  modB = UTILS.makeModOptions(0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 0.2, 0.2, 0.3, 1.0);
+  modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 0.2, 0.2, 0.3, 1.0);
+  modB = UTILS.makeCapOptions(0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 0.2, 0.2, 0.3, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.35, 0.35, 0.0, 10.0, 1.0, 1.0, 0.0, 0.5, 0.0, 0.25, 0.25, 0.25, 0.4, 1.0);
+  modA = UTILS.makeCapOptions(0.35, 0.35, 0.0, 10.0, 1.0, 1.0, 0.0, 0.5, 0.0, 0.25, 0.25, 0.25, 0.4, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.2, 0.2, 0.0, 5.0, 0.0, 1.0, 0.0, 0.5, -0.03, 0.5, 0.4, 0.4, 0.6, 1.0);
+  modB = UTILS.makeCapOptions(0.2, 0.2, 0.0, 5.0, 0.0, 1.0, 0.0, 0.5, -0.03, 0.5, 0.4, 0.4, 0.6, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.15, 0.15, 0.0, -10.0, -1.0, 1.0, 0.0, 0.5, -0.02, 0.65, 0.5, 0.5, 0.7, 1.0);
+  modA = UTILS.makeCapOptions(0.15, 0.15, 0.0, -10.0, -1.0, 1.0, 0.0, 0.5, -0.02, 0.65, 0.5, 0.5, 0.7, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.05, 0.05, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.0, 0.8, 1.0, 1.0, 1.0, 1.0);
+  modB = UTILS.makeCapOptions(0.05, 0.05, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.0, 0.8, 1.0, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.02, 0.85, 1.0, 1.0, 1.0, 1.0);
+  modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 0.02, 0.85, 1.0, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
   return vertices;
@@ -276,20 +276,20 @@ function makeRockVertices() {
   var vertices = new Float32Array((numCapVertices*10) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2, 1.0);
-  var modB = UTILS.makeModOptions(0.9, 0.7, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2, 1.0);
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2, 1.0);
+  var modB = UTILS.makeCapOptions(0.9, 0.7, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(1.0, 0.8, 0.0, 5.0, 0.0, 1.0, 0.0, 0.05, 0.0, 0.25, 0.3, 0.3, 0.3, 1.0);
+  modA = UTILS.makeCapOptions(1.0, 0.8, 0.0, 5.0, 0.0, 1.0, 0.0, 0.05, 0.0, 0.25, 0.3, 0.3, 0.3, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.8, 0.7, 0.0, 10.0, 0.0, 0.0, 1.0, 0.1, 0.05, 0.6, 0.25, 0.3, 0.15, 1.0);
+  modB = UTILS.makeCapOptions(0.8, 0.7, 0.0, 10.0, 0.0, 0.0, 1.0, 0.1, 0.05, 0.6, 0.25, 0.3, 0.15, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.4, 0.5, 0.0, 10.0, 1.0, 1.0, 0.0, 0.25, 0.0, 0.85, 0.2, 0.3, 0.1, 1.0);
+  modA = UTILS.makeCapOptions(0.4, 0.5, 0.0, 10.0, 1.0, 1.0, 0.0, 0.25, 0.0, 0.85, 0.2, 0.3, 0.1, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.4, 0.0, 1.0, 0.2, 0.4, 0.1, 1.0);
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.4, 0.0, 1.0, 0.2, 0.4, 0.1, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
   // adjust vertices for smooth concatenation of multiple copies
@@ -464,32 +464,32 @@ function makeStaticFoxBody() {
   var vertices = new Float32Array((numCapVertices*18) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, 0.0, 0.0, 1.0);
-  var modB = UTILS.makeModOptions(radius.nose, radius.nose, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.08, 0.93, 0.8, 0.3, 0.0, 1.0);
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 1.0, 0.0, 0.0, 0.0, 1.0);
+  var modB = UTILS.makeCapOptions(radius.nose, radius.nose, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.08, 0.93, 0.8, 0.3, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.midSnout, radius.midSnout, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.85, 0.8, 0.3, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(radius.midSnout, radius.midSnout, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, 0.85, 0.8, 0.3, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.8*radius.snoutHead, radius.snoutHead, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.15, 0.78, 0.8, 0.3, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(0.8*radius.snoutHead, radius.snoutHead, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.15, 0.78, 0.8, 0.3, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.midHead, radius.midHead, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.18, 0.7, 0.8, 0.3, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(radius.midHead, radius.midHead, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.18, 0.7, 0.8, 0.3, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.8*radius.headNeck, radius.headNeck, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.2, 0.55, 0.75, 0.25, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(0.8*radius.headNeck, radius.headNeck, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.2, 0.55, 0.75, 0.25, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.8*radius.neckBody, radius.neckBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.05, 0.3, 0.8, 0.3, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(0.8*radius.neckBody, radius.neckBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.05, 0.3, 0.8, 0.3, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(0.8*radius.midBody, radius.midBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.8, 0.3, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(0.8*radius.midBody, radius.midBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.8, 0.3, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.lowerBody, radius.lowerBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 0.75, 0.25, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(radius.lowerBody, radius.lowerBody, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 0.75, 0.25, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
   
-  modB = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, -0.6, 0.65, 0.15, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.1, -0.6, 0.65, 0.15, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
   // now do color correction
@@ -564,17 +564,17 @@ function makeStaticFoxTail() {
   var i = 0;
 
   // make the tail
-  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.7, 0.2, 0.0, 1.0);
-  var modB = UTILS.makeModOptions(radius.upperTail, radius.upperTail, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.1, 0.7, 0.2, 0.0, 1.0);
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.7, 0.2, 0.0, 1.0);
+  var modB = UTILS.makeCapOptions(radius.upperTail, radius.upperTail, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.1, 0.7, 0.2, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.midTail, radius.midTail, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 0.8, 0.3, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(radius.midTail, radius.midTail, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 0.8, 0.3, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.lowerTail, radius.lowerTail, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.8, 1.0, 1.0, 1.0, 1.0);
+  modB = UTILS.makeCapOptions(radius.lowerTail, radius.lowerTail, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -0.8, 1.0, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -1.0, 1.0, 1.0, 1.0, 1.0);
+  modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, -1.0, 1.0, 1.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
 
@@ -608,23 +608,23 @@ function makeStaticFoxLeg() {
   var vertices = new Float32Array((numCapVertices*12) * FLOATS_PER_VERTEX);
   var i = 0;
 
-  var modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.15, 0.8, 0.3, 0.0, 1.0);
-  var modB = UTILS.makeModOptions(radius.shoulder, 0.7*radius.shoulder, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.78, 0.28, 0.0, 1.0);
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.15, 0.8, 0.3, 0.0, 1.0);
+  var modB = UTILS.makeCapOptions(radius.shoulder, 0.7*radius.shoulder, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.78, 0.28, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.knee, 0.7*radius.knee, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.5, 0.7, 0.2, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(radius.knee, 0.7*radius.knee, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.5, 0.7, 0.2, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.ankle, radius.ankle, 0.0, 0.0, 0.0, 0.0, 1.0, -0.1, 0.0, 0.9, 0.3, 0.1, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(radius.ankle, radius.ankle, 0.0, 0.0, 0.0, 0.0, 1.0, -0.1, 0.0, 0.9, 0.3, 0.1, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(radius.anklePaw, 0.7*radius.anklePaw, 0.0, 0.0, 0.0, 0.0, 1.0, -0.15, 0.0, 0.95, 0.3, 0.1, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(radius.anklePaw, 0.7*radius.anklePaw, 0.0, 0.0, 0.0, 0.0, 1.0, -0.15, 0.0, 0.95, 0.3, 0.1, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
-  modB = UTILS.makeModOptions(radius.paw, 0.7*radius.paw, 0.0, 0.0, 0.0, 0.0, 1.0, -0.15, 0.0, 1.0, 0.3, 0.1, 0.0, 1.0);
+  modB = UTILS.makeCapOptions(radius.paw, 0.7*radius.paw, 0.0, 0.0, 0.0, 0.0, 1.0, -0.15, 0.0, 1.0, 0.3, 0.1, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modA, modB]);
 
-  modA = UTILS.makeModOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -0.1, 0.0, 1.0, 0.4, 0.15, 0.0, 1.0);
+  modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -0.1, 0.0, 1.0, 0.4, 0.15, 0.0, 1.0);
   i = UTILS.makeTube(numCapVertices, vertices, i, [modB, modA]);
 
 

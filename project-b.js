@@ -31,7 +31,7 @@ var FSHADER_SOURCE =
   'void main() {\n' +
   '  float diff = clamp(dot(normalize(v_Norm), normalize(v_ToLight)), 0.0, 1.0);\n' +
   '  gl_FragColor = vec4(vec3(v_Color) * diff, 1.0);\n' +
-  '  gl_FragColor = v_Color;\n' +
+  //'  gl_FragColor = v_Color;\n' +
   '}\n';
 
 // constants
@@ -53,7 +53,7 @@ function initGlobals() {
       panStep: { horizontal: 0, vertical: 0, },
     },
     
-    eagleStep: EAGLE_STEP,
+    eagleStep: -EAGLE_STEP,
     foxUpperLegAngleStep: FOX_LEG_ANGLE_STEP,
     foxLowerLegAngleStep: FOX_LEG_ANGLE_STEP,
   };
@@ -484,6 +484,7 @@ function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatrix, u
   //=========================================================================//
   modelMatrix = popMatrix();
   modelMatrix.scale(3.5, 3.0, 2.5);
+  modelMatrix.rotate(90.0, 0, 1, 0);
   pushMatrix(modelMatrix);
 
   // right wing
@@ -491,14 +492,14 @@ function drawEagle(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatrix, u
 
   // left wing
   modelMatrix = popMatrix();
-  modelMatrix.scale(-1.0, 1.0, 1.0);
+  modelMatrix.scale(1.0, 1.0, -1.0);
   drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix);
 }
 
 function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
   // upper wing
-  modelMatrix.translate(0.02, 0.0, 0.0);
-  modelMatrix.rotate(state.wingAngle, 0, 0, 1);
+  modelMatrix.translate(0.0, 0.0, 0.02);
+  modelMatrix.rotate(state.wingAngle, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   normalMatrix.setInverseOf(modelMatrix);
@@ -511,8 +512,8 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatri
     eagle.upperWing.numVertices);
 
   // middle wing
-  modelMatrix.translate(0.24, 0.0, 0.0);
-  modelMatrix.rotate(state.wingAngle*0.8, 0, 0, 1);
+  modelMatrix.translate(0.0, 0.0, 0.24);
+  modelMatrix.rotate(state.wingAngle*0.8, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   normalMatrix.setInverseOf(modelMatrix);
@@ -525,8 +526,8 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatri
     eagle.middleWing.numVertices);
   
   // lower wing
-  modelMatrix.translate(0.29, 0.0, 0.0);
-  modelMatrix.rotate(state.wingAngle/1.5, 0, 0, 1);
+  modelMatrix.translate(0.0, 0.0, 0.29);
+  modelMatrix.rotate(state.wingAngle/1.5, 1, 0, 0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
   normalMatrix.setInverseOf(modelMatrix);
@@ -812,10 +813,10 @@ function animateAnimals(elapsed) {
   // eagle wing angle
   var wingAngle = state.eagle.wingAngle;
   if (wingAngle >   30.0 && rates.eagleStep > 0) 
-    rates.eagleStep = -rates.eagleStep*2;
+    rates.eagleStep = -rates.eagleStep/2;
 
   if (wingAngle <  -40.0 && rates.eagleStep < 0) 
-    rates.eagleStep = -rates.eagleStep/2;
+    rates.eagleStep = -rates.eagleStep*2;
 
   var newWingAngle = wingAngle + (rates.eagleStep * elapsed) / 1000.0;
   state.eagle.wingAngle = newWingAngle % 360;

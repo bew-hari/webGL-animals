@@ -27,18 +27,12 @@ var UTILS = {
         data[i+5] = mod[0].color.g;
         data[i+6] = mod[0].color.b;
         data[i+7] = mod[0].color.a;
-/*
-        data[i+8] = 0.0;
-        data[i+9] = 0.0;
-        data[i+10] = 1.0;
-        data[i+11] = 0.0;
-//*/
-//*
+
         data[i+8] = transformedNorm.elements[0];
         data[i+9] = transformedNorm.elements[1];
         data[i+10] = transformedNorm.elements[2];
         data[i+11] = transformedNorm.elements[3];
-//*/
+
       } else {
         
         pos.set(
@@ -67,18 +61,11 @@ var UTILS = {
         data[i+5] = mod[1].color.g;
         data[i+6] = mod[1].color.b;
         data[i+7] = mod[1].color.a;
-/*
-        data[i+8] = 0.0;
-        data[i+9] = 0.0;
-        data[i+10] = 1.0;
-        data[i+11] = 0.0;
-//*/
-//*
+
         data[i+8] = transformedNorm.elements[0];
         data[i+9] = transformedNorm.elements[1];
         data[i+10] = transformedNorm.elements[2];
         data[i+11] = transformedNorm.elements[3];
-//*/
 
       }
     }
@@ -86,8 +73,8 @@ var UTILS = {
     return i;
   },
 
-  // returns mod object for use in makeTube
-  makeModOptions: function(scaleX, scaleY, scaleZ, rotateAngle, rotateX, rotateY, rotateZ, transX, transY, transZ, r, g, b, a) {
+  // returns cap modification object for use in makeTube
+  makeCapOptions: function(scaleX, scaleY, scaleZ, rotateAngle, rotateX, rotateY, rotateZ, transX, transY, transZ, r, g, b, a) {
     var posTransform = new Matrix4(),
         normTransform = new Matrix4();
 
@@ -162,10 +149,12 @@ var UTILS = {
       result[v+1] = transformedPos.elements[1];
       result[v+2] = transformedPos.elements[2];
       result[v+3] = transformedPos.elements[3];
+
       result[v+4] = vertices[v+4];
       result[v+5] = vertices[v+5];
       result[v+6] = vertices[v+6];
       result[v+7] = vertices[v+7];
+
       result[v+8] = transformedNorm.elements[0];
       result[v+9] = transformedNorm.elements[1];
       result[v+10] = transformedNorm.elements[2];
