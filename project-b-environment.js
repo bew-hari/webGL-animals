@@ -1,12 +1,18 @@
 function Environment() {
-  var groundVertices = makeGroundVertices(),
+  var axesVertices = make3DAxes(),
+      groundVertices = makeGroundVertices(),
       mountainVertices = makeMountainVertices(),
       forestVertices = makeRandomForestVertices(),
       rockVertices = makeRandomRocksVertices(),
       foxVertices = makeRandomFoxesVertices();
 
-  var ground = {
+  var axes = {
     startVertexOffset: 0,
+    numVertices: axesVertices.length / FLOATS_PER_VERTEX,
+  };
+
+  var ground = {
+    startVertexOffset: axes.startVertexOffset + axes.numVertices,
     numVertices: groundVertices.length / FLOATS_PER_VERTEX,
   };
 
@@ -31,7 +37,8 @@ function Environment() {
   };
 
   var numElements = 
-    groundVertices.length
+    axesVertices.length
+    + groundVertices.length
     + mountainVertices.length
     + forestVertices.length
     + rockVertices.length
@@ -39,7 +46,8 @@ function Environment() {
 
   var vertices = new Float32Array(numElements);
 
-  vertices.set(groundVertices, 0);
+  vertices.set(axesVertices, 0);
+  vertices.set(groundVertices, ground.startVertexOffset*FLOATS_PER_VERTEX);
   vertices.set(mountainVertices, mountain.startVertexOffset*FLOATS_PER_VERTEX);
   vertices.set(forestVertices, forest.startVertexOffset*FLOATS_PER_VERTEX);
   vertices.set(rockVertices, rock.startVertexOffset*FLOATS_PER_VERTEX);
@@ -50,11 +58,89 @@ function Environment() {
   this.startVertexOffset = 0;
   this.numVertices = numElements / FLOATS_PER_VERTEX;
   this.vertices = vertices;
+  this.axes = axes;
   this.ground = ground;
   this.mountain = mountain;
   this.forest = forest;
   this.rock = rock;
   this.fox = fox;
+}
+
+function make3DAxes() {
+  var numCapVertices = 4;
+  var axisRadius = 0.01;
+
+  var xAxis = new Float32Array((numCapVertices*6) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 90.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0);
+  var modB = UTILS.makeCapOptions(axisRadius, axisRadius, 0.0, 90.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, xAxis, i, [modA, modB]);
+
+  modA = UTILS.makeCapOptions(axisRadius, axisRadius, 0.0, 90.0, 0.0, 1.0, 0.0, 5.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, xAxis, i, [modB, modA]);
+
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 90.0, 0.0, 1.0, 0.0, 5.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, xAxis, i, [modA, modB]);
+
+
+  var yAxis = new Float32Array((numCapVertices*6) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 90.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0);
+  var modB = UTILS.makeCapOptions(axisRadius, axisRadius, 0.0, 90.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, yAxis, i, [modA, modB]);
+
+  modA = UTILS.makeCapOptions(axisRadius, axisRadius, 0.0, 90.0, 1.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 1.0, 0.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, yAxis, i, [modB, modA]);
+
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 90.0, 1.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 1.0, 0.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, yAxis, i, [modA, modB]);
+
+
+  var zAxis = new Float32Array((numCapVertices*6) * FLOATS_PER_VERTEX);
+  var i = 0;
+
+  var modA = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
+  var modB = UTILS.makeCapOptions(axisRadius, axisRadius, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, zAxis, i, [modA, modB]);
+
+  modA = UTILS.makeCapOptions(axisRadius, axisRadius, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 5.0, 0.0, 0.0, 1.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, zAxis, i, [modB, modA]);
+
+  modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 5.0, 0.0, 0.0, 1.0, 1.0);
+  i = UTILS.makeTube(numCapVertices, zAxis, i, [modA, modB]);
+
+//*
+  var vertices = new Float32Array(xAxis.length + yAxis.length + zAxis.length + 4 * FLOATS_PER_VERTEX);
+  i = 0;
+  vertices.set(xAxis, i);
+  i += xAxis.length;
+
+  // repeat the last vertex
+  for (var j=0; j<FLOATS_PER_VERTEX; j++, i++) {
+    vertices[i] = vertices[i-FLOATS_PER_VERTEX];
+  }
+
+  for (var j=0; j<FLOATS_PER_VERTEX; j++, i++) {
+    vertices[i] = yAxis[j];
+  }
+  vertices.set(yAxis, i);
+  i += yAxis.length;
+
+  // repeat the last vertex
+  for (var j=0; j<FLOATS_PER_VERTEX; j++, i++) {
+    vertices[i] = vertices[i-FLOATS_PER_VERTEX];
+  }
+
+  for (var j=0; j<FLOATS_PER_VERTEX; j++, i++) {
+    vertices[i] = zAxis[j];
+  }
+  vertices.set(zAxis, i);
+  i += zAxis.length;
+//*/
+
+  return vertices;
 }
 
 function makeGroundVertices() {

@@ -397,6 +397,12 @@ function drawEnvironment(gl, uniforms) {
   normalMatrix.transpose();
   gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
+  // draw the 3D axes
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    environment.startVertexOffset + environment.axes.startVertexOffset,
+    environment.axes.numVertices);
+
   // draw the ground
   gl.drawArrays(
     gl.LINES,
