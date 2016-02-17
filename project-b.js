@@ -8,16 +8,26 @@ var VSHADER_SOURCE =
   'uniform mat4 u_ViewMatrix;\n' +
   'uniform mat4 u_ProjMatrix;\n' +
   'uniform mat4 u_NormalMatrix;\n' +
+  'uniform int u_LightType;\n' +
   'uniform vec4 u_LightPos;\n' +
   'varying vec4 v_Color;\n' +
-  'varying vec4 v_Norm;\n' +
-  'varying vec4 v_ToLight;\n' +
   'void main() {\n' +
   '  gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n' +
   '  gl_PointSize = 10.0;\n' +
-  '  v_Color = a_Color;\n' +
-  '  v_Norm = u_NormalMatrix * a_Normal;\n' +
-  '  v_ToLight = u_LightPos - u_ModelMatrix * a_Position;\n' +
+  
+  '  float diff;\n' +
+  '  if (u_LightType == 0) {\n' +
+  '    diff = 1.0;\n' + 
+  '  } else if (u_LightType == 1) {\n' +
+  '    vec4 norm = u_NormalMatrix * a_Normal;\n' +
+  '    diff = clamp(dot(normalize(norm), normalize(u_LightPos)), 0.0, 1.0);\n' +
+  '  } else {\n' +
+  '    vec4 norm = u_NormalMatrix * a_Normal;\n' +
+  '    vec4 toLight = u_LightPos - u_ModelMatrix * a_Position;\n' +
+  '    diff = clamp(dot(normalize(norm), normalize(toLight)), 0.0, 1.0);\n' +
+  '  }\n' +
+
+  '  v_Color = vec4(a_Color.xyz * (0.3 + 0.7*diff), 1.0);\n' +
   '}\n';
 
 // Fragment shader program
@@ -26,12 +36,8 @@ var FSHADER_SOURCE =
   'precision mediump float;\n' +
   //'#endif\n' +
   'varying vec4 v_Color;\n' +
-  'varying vec4 v_Norm;\n' + 
-  'varying vec4 v_ToLight;\n' + 
   'void main() {\n' +
-  '  vec4 dirLight = vec4(0, 0, 10, 0);\n' + 
-  '  float diff = clamp(dot(normalize(v_Norm), normalize(v_ToLight)), 0.0, 1.0);\n' +
-  '  gl_FragColor = vec4(vec3(v_Color) * (0.3 + 0.7*diff), 1.0);\n' +
+  '  gl_FragColor = v_Color;\n' +
   //'  gl_FragColor = v_Color;\n' +
   '}\n';
 
@@ -62,6 +68,7 @@ function initGlobals() {
   // animation states
   globals.state = {
     isPaused: false,
+    isUIOpened: false,
     
     projection: {
       angle: 40,
@@ -77,7 +84,8 @@ function initGlobals() {
     },
 
     light: {
-      pos: { x: 0.0, y: 5.0, z: 0.0, },
+      type: 0,
+      pos: { x: 0.0, y: -10.0, z: 10.0, },
     },
 
     orientation: {
@@ -98,6 +106,9 @@ function initGlobals() {
       pawAngle: 0.0,
     },
   };
+
+  globals.uniforms = null;
+  globals.canvas = null;
 
   // mouse data
   globals.mouse = {
@@ -120,11 +131,13 @@ function initGlobals() {
 function main() {
   initGlobals();
 
+  winResize();
+
   // Retrieve <canvas> element
-  var canvas = document.getElementById('webgl');
+  var canvas = globals.canvas;
 
   // Get the rendering context for WebGL
-  var gl = getWebGLContext(canvas);
+  var gl = globals.gl;
   if (!gl) {
     console.log('Failed to get the rendering context for WebGL');
     return;
@@ -147,7 +160,7 @@ function main() {
     return;
   }
 
-  registerMouseEvents(canvas, gl);
+  registerMouseEvents(gl);
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -179,14 +192,21 @@ function main() {
     return;
   }
 
-  // Set the light position
+  // Get the light type storage location
+  var u_LightType = gl.getUniformLocation(gl.program, 'u_LightType');
+  if (!u_LightType) { 
+    console.log('Failed to get u_LightType');
+    return;
+  }
+
+  // Get the light position storage location
   var u_LightPos = gl.getUniformLocation(gl.program, 'u_LightPos');
   if (!u_LightPos) { 
     console.log('Failed to get u_LightPos');
     return;
   }
 
-  var uniforms = {
+  globals.uniforms = {
     u_ModelMatrix: u_ModelMatrix,
     modelMatrix: new Matrix4(),
 
@@ -204,10 +224,15 @@ function main() {
 
   // Start drawing
   var tick = function() {
+    var gl = globals.gl;
+
     animate(gl, buffer);
     
     // Clear <canvas>  colors AND the depth buffer
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Send in light type
+    gl.uniform1i(u_LightType, globals.state.light.type);
 
     // Send in light position
     var lightPos = globals.state.light.pos;
@@ -218,7 +243,7 @@ function main() {
         pan = globals.state.view.pan;
 
     var proj = globals.state.projection;
-    proj.aspectRatio = (canvas.width/2) / canvas.height;
+    proj.aspectRatio = (globals.canvas.width/2) / globals.canvas.height;
 
     // Left viewport
     // ----------------------------------------------------------------------
@@ -227,13 +252,13 @@ function main() {
                 gl.drawingBufferWidth/2, 
                 gl.drawingBufferHeight);
 
-    uniforms.viewMatrix.setLookAt(
+    globals.uniforms.viewMatrix.setLookAt(
       eye.x, eye.y, eye.z,
       lookAt.x, lookAt.y, lookAt.z,
       0, 0, 1);
-    uniforms.projMatrix.setPerspective(proj.angle, proj.aspectRatio, proj.near, proj.far);
+    globals.uniforms.projMatrix.setPerspective(proj.angle, proj.aspectRatio, proj.near, proj.far);
 
-    draw(gl, canvas, uniforms);
+    draw(gl);
 
     // Right viewport
     // ----------------------------------------------------------------------
@@ -242,18 +267,18 @@ function main() {
                 gl.drawingBufferWidth/2,
                 gl.drawingBufferHeight);
 
-    uniforms.viewMatrix.setLookAt(
+    globals.uniforms.viewMatrix.setLookAt(
       eye.x, eye.y, eye.z,
       lookAt.x, lookAt.y, lookAt.z,
       0, 0, 1);
     
     var bounds = proj.near + ((proj.far - proj.near) / 3) * Math.tan(proj.angle/2 * Math.PI/180);
-    uniforms.projMatrix.setOrtho(-bounds*proj.aspectRatio, bounds*proj.aspectRatio, -bounds, bounds, proj.near, proj.far);
+    globals.uniforms.projMatrix.setOrtho(-bounds*proj.aspectRatio, bounds*proj.aspectRatio, -bounds, bounds, proj.near, proj.far);
     
-    draw(gl, canvas, uniforms);
+    draw(gl);
     
     // request that the browser calls tick
-    requestId = requestAnimationFrame(tick, canvas);
+    requestId = requestAnimationFrame(tick, globals.canvas);
   };
 
   tick();
@@ -330,8 +355,10 @@ function initVertexBuffers(gl) {
   return vertexBuffer;
 }
 
-function draw(gl, canvas, uniforms) {
-  
+function draw(gl) {
+  var canvas = globals.canvas;
+  var uniforms = globals.uniforms;
+
   var data = globals.data;
   var state = globals.state;
 
@@ -344,9 +371,6 @@ function draw(gl, canvas, uniforms) {
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
   // Pass in the view matrix (+z is up)
-  // modify view matrix with mouse drag quaternion-based rotation 
-  // doesn't work; weird stuff happens
-  //viewMatrix.concat(state.orientation.mat);
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
   
   // Draw the environment
@@ -362,12 +386,16 @@ function drawEnvironment(gl, uniforms) {
 
   var u_ModelMatrix = uniforms.u_ModelMatrix;
   var modelMatrix = uniforms.modelMatrix;
+  var u_NormalMatrix = uniforms.u_NormalMatrix;
+  var normalMatrix = uniforms.normalMatrix;
 
   // Set modelMatrix and pass it into vertex shader
   modelMatrix.setTranslate(0.0, 0.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
-  updateNormals(gl, uniforms);
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
   // draw the ground
   gl.drawArrays(
@@ -429,6 +457,8 @@ function drawAnimals(gl, uniforms) {
 
   // rotate to get into "world" coordinates (+z is up)
   modelMatrix.rotate(-90.0, 1, 0, 0);
+
+  modelMatrix.concat(state.orientation.mat);
 
   pushMatrix(modelMatrix);
 
@@ -785,342 +815,3 @@ function drawFoxHindLeg(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix
     fox.startVertexOffset + fox.paw.startVertexOffset,
     fox.paw.numVertices);
 }
-
-// Last time that this function was called
-var g_last = Date.now();
-
-function animate() {
-  var state = globals.state;
-  var rates = globals.rates;
-
-  // Calculate the elapsed time
-  var now = Date.now();
-  var elapsed = now - g_last;
-  g_last = now;
-
-  // don't change any animation parameter if paused
-  if (state.isPaused)
-    elapsed = 0;
-
-  animateView(elapsed);
-
-  animateAnimals(elapsed);
-}
-
-function animateAnimals(elapsed) {
-  var state = globals.state;
-  var rates = globals.rates;
-
-  // eagle wing angle
-  var wingAngle = state.eagle.wingAngle;
-  if (wingAngle >   30.0 && rates.eagleStep > 0) 
-    rates.eagleStep = -rates.eagleStep/2;
-
-  if (wingAngle <  -40.0 && rates.eagleStep < 0) 
-    rates.eagleStep = -rates.eagleStep*2;
-
-  var newWingAngle = wingAngle + (rates.eagleStep * elapsed) / 1000.0;
-  state.eagle.wingAngle = newWingAngle % 360;
-
-  state.eagle.tailAngle = (newWingAngle % 360) / 3.0;
-
-  // fox leg angle
-  var upperLegAngle = state.fox.upperLegAngle;
-  if (upperLegAngle >   40.0 && rates.foxUpperLegAngleStep > 0) 
-    rates.foxUpperLegAngleStep = -rates.foxUpperLegAngleStep;
-  if (upperLegAngle <  -40.0 && rates.foxUpperLegAngleStep < 0) 
-    rates.foxUpperLegAngleStep = -rates.foxUpperLegAngleStep;
-
-  var newAngle = upperLegAngle + (rates.foxUpperLegAngleStep * elapsed) / 1000.0;
-  newAngle %= 360;
-  state.fox.upperLegAngle = newAngle;
-  state.fox.pawAngle = newAngle / 2 + 30.0;
-
-  var lowerLegAngle = state.fox.lowerLegAngle;
-  if (lowerLegAngle >   40.0 && rates.foxLowerLegAngleStep > 0) 
-    rates.foxLowerLegAngleStep = -rates.foxLowerLegAngleStep;
-  if (lowerLegAngle <  -40.0 && rates.foxLowerLegAngleStep < 0) 
-    rates.foxLowerLegAngleStep = -rates.foxLowerLegAngleStep;
-
-  newAngle = lowerLegAngle + (rates.foxLowerLegAngleStep * elapsed) / 1000.0;
-  newAngle %= 360;
-  state.fox.lowerLegAngle = newAngle;
-}
-
-function animateView(elapsed) {
-
-  var eye = globals.state.view.eye,
-      lookAt = globals.state.view.lookAt,
-      pan = globals.state.view.pan,
-      cylinderRadius = globals.state.view.cylinderRadius;
-
-  var eyeStep = globals.rates.view.eyeStep,
-      panStep = globals.rates.view.panStep;
-
-  // calculate forward and right unit vectors
-  var forward = new Vector3([Math.sin(pan.horizontal*Math.PI/180), Math.cos(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius]).normalize();
-  var right = forward.cross(new Vector3([0, 0, 1])).normalize();
-
-  var normalizer = Math.sqrt(eyeStep.right*eyeStep.right + eyeStep.forward*eyeStep.forward);
-  normalizer = normalizer == 0 ? 1 : normalizer;
-
-  var dx = (eyeStep.right * right.elements[0] + eyeStep.forward * forward.elements[0]) / normalizer * EYE_STEP,
-      dy = (eyeStep.right * right.elements[1] + eyeStep.forward * forward.elements[1]) / normalizer * EYE_STEP,
-      dz = (eyeStep.up + eyeStep.forward * forward.elements[2]) / normalizer;
-  
-  // eye translation
-  eye.x += (dx * elapsed) / 1000.0;
-  eye.y += (dy * elapsed) / 1000.0;
-  eye.z += (dz * elapsed) / 1000.0;
-
-  // pan
-  pan.horizontal += (panStep.horizontal * elapsed) / 1000.0;
-  pan.vertical += (panStep.vertical * elapsed) / 1000.0;
-  pan.horizontal %= 360;
-  pan.vertical %= 360;
-
-  // lookAt adjustment
-  lookAt.x = eye.x + Math.sin(pan.horizontal*Math.PI/180)*cylinderRadius;
-  lookAt.y = eye.y + Math.cos(pan.horizontal*Math.PI/180)*cylinderRadius;
-  lookAt.z = eye.z + pan.vertical;
-}
-
-
-function updateNormals(gl, uniforms) {
-  var modelMatrix = uniforms.modelMatrix;
-
-  var u_NormalMatrix = uniforms.u_NormalMatrix;
-  var normalMatrix = uniforms.normalMatrix;
-
-  normalMatrix.setInverseOf(modelMatrix);
-  normalMatrix.transpose();
-
-  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
-}
-
-// HTML elements functions
-function play() { globals.state.isPaused = false; }
-function pause() { globals.state.isPaused = true; }
-function reset() {
-  initGlobals();
-
-  // reset HTML elements
-  document.getElementById('toggle-eagle').checked = true;
-  document.getElementById('toggle-fox').checked = true;
-}
-
-function toggleEagle(cb) {
-  var eagle = globals.state.eagle;
-
-  if (cb.checked) 
-    eagle.show = true;
-  else
-    eagle.show = false;
-}
-
-function toggleFox(cb) {
-  var fox = globals.state.fox;
-
-  if (cb.checked) 
-    fox.show = true;
-  else
-    fox.show = false;
-}
-
-// mouse functions
-function registerMouseEvents(canvas, gl) {
-  canvas.onmousedown = function(e) { myMouseDown(e, gl, canvas); };
-  canvas.onmousemove = function(e) { myMouseMove(e, gl, canvas); };
-  canvas.onmouseup = function(e) { myMouseUp(e, gl, canvas); };
-}
-
-function unregisterMouseEvents(canvas, gl) {
-  canvas.onmousedown = null;
-  canvas.onmousemove = null;
-  canvas.onmouseup = null;
-}
-
-function myMouseDown(e, gl, canvas) {
-  var mouse = globals.mouse;
-
-  // get canvas corners in pixels
-  var rect = e.target.getBoundingClientRect();
-  // x==0 at canvas left edge, y==0 at canvas bottom edge
-  var xp = e.clientX - rect.left;
-  var yp = canvas.height - (e.clientY - rect.top);
-
-  // convert to Canonical View Volume (CVV) coordinates:
-  var x = (xp - canvas.width/2) / (canvas.width/2);
-  var y = (yp - canvas.height/2) / (canvas.height/2);
-
-  mouse.isDragging = true;
-  mouse.click.x = x;
-  mouse.click.y = y;
-
-  mouse.pos.x = x;
-  mouse.pos.y = y;
-}
-
-function myMouseMove(e, gl, canvas) {
-  var mouse = globals.mouse;
-  var state = globals.state;
-
-  if (!mouse.isDragging) return;
-
-  // get canvas corners in pixels
-  var rect = e.target.getBoundingClientRect();
-  // x==0 at canvas left edge, y==0 at canvas bottom edge
-  var xp = e.clientX - rect.left;
-  var yp = canvas.height - (e.clientY - rect.top);
-
-  // convert to Canonical View Volume (CVV) coordinates:
-  var x = (xp - canvas.width/2) / (canvas.width/2);
-  var y = (yp - canvas.height/2) / (canvas.height/2);
-
-  // find how far we dragged the mouse
-  mouse.drag.x += (x - mouse.pos.x);
-  mouse.drag.y += (y - mouse.pos.y);
-
-  // then update orientation quaternion
-  updateOrientation(state.orientation, x - mouse.pos.x, y - mouse.pos.y);
-  
-  mouse.pos.x = x;
-  mouse.pos.y = y;
-}
-
-function myMouseUp(e, gl, canvas) {
-  var mouse = globals.mouse;
-  var state = globals.state;
-  var data = globals.data;
-
-  // get canvas corners in pixels
-  var rect = e.target.getBoundingClientRect();
-  // x==0 at canvas left edge, y==0 at canvas bottom edge
-  var xp = e.clientX - rect.left;
-  var yp = canvas.height - (e.clientY - rect.top);
-
-  // convert to Canonical View Volume (CVV) coordinates:
-  var x = (xp - canvas.width/2) / (canvas.width/2);
-  var y = (yp - canvas.height/2) / (canvas.height/2);
-
-  // find how far we dragged the mouse
-  mouse.drag.x += (x - mouse.pos.x);
-  mouse.drag.y += (y - mouse.pos.y);
-
-  // then update orientation quaternion
-  updateOrientation(state.orientation, x - mouse.pos.x, y - mouse.pos.y);
-
-  mouse.isDragging = false;
-
-  // check for click
-  if (Math.abs(x - mouse.click.x) < 0.001 
-      && Math.abs(y - mouse.click.y) < 0.001) {
-    
-    // do something for click
-    //console.log(globals.state.view.pan);
-    var pan = globals.state.view.pan; var cylinderRadius = globals.state.view.cylinderRadius;
-    //console.log(Math.sin(pan.horizontal*Math.PI/180), -Math.cos(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius);
-    console.log(globals.state.view.lookAt);
-  }
-}
-
-function updateOrientation(orientation, xdrag, ydrag) {
-  var newQuat = new Quaternion(0, 0, 0, 1);
-  var tmpQuat = new Quaternion(0, 0, 0, 1);
-
-  var dist = Math.sqrt(xdrag*xdrag + ydrag*ydrag);
-
-  newQuat.setFromAxisAngle(-ydrag + 0.0001, xdrag + 0.0001, 0.0, dist*150.0);
-
-  // apply new rotation
-  tmpQuat.multiply(newQuat, orientation.quat);
-  tmpQuat.normalize();
-
-  // then set orientation to result
-  orientation.quat.copy(tmpQuat);
-
-  // convert quaternion to matrix
-  orientation.mat.setFromQuat(tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w);
-}
-
-// keyboard listeners
-window.onkeydown = function(e) {
-  var eye = globals.state.view.eye,
-      pan = globals.state.view.pan,
-      cylinderRadius = globals.state.view.cylinderRadius;
-
-  var eyeStep = globals.rates.view.eyeStep,
-      panStep = globals.rates.view.panStep;
-
-  var forward = new Vector3([Math.sin(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius, -Math.cos(pan.horizontal*Math.PI/180)]).normalize();
-  var right = forward.cross(new Vector3([0, 1, 0])).normalize();
-
-  switch (e.keyCode) {
-    case 65: // A key
-      eyeStep.right = -EYE_STEP;
-      break;
-    case 68: // D key
-      eyeStep.right = EYE_STEP;
-      break;
-    case 87: // W key
-      eyeStep.up = EYE_STEP;
-      break;
-    case 83: // S key
-      eyeStep.up = -EYE_STEP;
-      break;
-    case 81: // Q key
-      eyeStep.forward = -EYE_STEP;
-      break;
-    case 69: // E key
-      eyeStep.forward = EYE_STEP;
-      break;
-    case 37: // left arrow
-      panStep.horizontal = -20*PAN_STEP;
-      break;
-    case 39: // right arrow
-      panStep.horizontal = 20*PAN_STEP;
-      break;
-    case 38: // up arrow
-      panStep.vertical = PAN_STEP;
-      break;
-    case 40: // down arrow
-      panStep.vertical = -PAN_STEP;
-      break;
-    default:
-      return;
-  }
-};
-
-window.onkeyup = function(e) {
-  var state = globals.state;
-  var eyeStep = globals.rates.view.eyeStep,
-      panStep = globals.rates.view.panStep;
-
-  switch (e.keyCode) {
-    case 65: // A key
-    case 68: // D key
-      eyeStep.right = 0;
-      break;
-    case 87: // W key
-    case 83: // S key
-      eyeStep.up = 0;
-      break;
-    case 81: // Q key
-    case 69: // E key
-      eyeStep.forward = 0;
-      break;
-    case 37: // left arrow
-    case 39: // right arrow
-      panStep.horizontal = 0;
-      break;
-    case 38: // up arrow
-    case 40: // down arrow
-      panStep.vertical = 0;
-      break;
-    case 32: // spacebar
-      state.isPaused = !state.isPaused;
-      break;
-    default:
-      return;
-  }
-};

@@ -61,8 +61,8 @@ function makeGroundVertices() {
   var xcount = 100;     // # of lines to draw in x,y to make the grid.
   var ycount = 100;   
   var xymax = 50.0;     // grid size; extends to cover +/-xymax in x and y.
-  var xColr = new Float32Array([0.8, 0.4, 0.0, 1.0]);  // reddish brown
-  var yColr = new Float32Array([0.0, 0.4, 0.2, 1.0]);  // softer brown
+  var xColr = new Float32Array([1.0, 1.0, 0.3, 1.0]);  // bright yellow
+  var yColr = new Float32Array([0.5, 1.0, 0.5, 1.0]);  // bright green
 
   var vertices = new Float32Array(FLOATS_PER_VERTEX*2*(xcount+ycount));
   var xgap = xymax/(xcount-1);    // HALF-spacing between lines in x,y;
@@ -527,12 +527,12 @@ function makeStaticFoxBody() {
 
 function makeStaticFoxEar() {
   var vertices = new Float32Array([
-    0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,     1.0, 1.0, 1.0, 0.0,
-    0.0, 0.0, -0.3, 1.0, 0.8, 0.3, 0.0, 1.0,    1.0, 1.0, 1.0, 0.0,
-    -0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,    1.0, 1.0, 1.0, 0.0,
-    0.0, 0.5, 0.0, 1.0, 0.8, 0.3, 0.0, 1.0,     1.0, 1.0, 1.0, 0.0,
-    0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,     1.0, 1.0, 1.0, 0.0,
-    0.0, 0.0, -0.3, 1.0, 0.8, 0.3, 0.0, 1.0,    1.0, 1.0, 1.0, 0.0,
+    0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,     0.5, -0.1, 0.1, 0.0,
+    0.0, 0.0, -0.3, 1.0, 0.8, 0.3, 0.0, 1.0,    0.0, -0.1, -0.3, 0.0,
+    -0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,   -0.5, -0.1, 0.1, 0.0,
+    0.0, 0.5, 0.0, 1.0, 0.8, 0.3, 0.0, 1.0,     0.0, 0.5, 0.1, 0.0,
+    0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,     0.5, -0.1, 0.1, 0.0,
+    0.0, 0.0, -0.3, 1.0, 0.8, 0.3, 0.0, 1.0,    0.0, -0.1, -0.3, 0.0,
   ]);
 
 

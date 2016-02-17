@@ -104,7 +104,7 @@ var UTILS = {
         -Math.sin(2*Math.PI*(v)/numCapVertices),
         Math.cos(2*Math.PI*(v)/numCapVertices),
         0.0,
-        1.0
+        0.0
       );
 
       surface.copy(transformedPos1.subtract(transformedPos));
