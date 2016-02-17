@@ -410,7 +410,7 @@ function drawEnvironment(gl, uniforms) {
     environment.ground.numVertices);
 
   // draw the forest
-  modelMatrix.setTranslate(0.0, 13.0, 0.0);
+  modelMatrix.setTranslate(0.0, 6.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -418,7 +418,7 @@ function drawEnvironment(gl, uniforms) {
     environment.forest.numVertices);
 
   // draw the rocks
-  modelMatrix.setTranslate(0.0, 13.0, 0.0);
+  modelMatrix.setTranslate(0.0, 6.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -426,7 +426,7 @@ function drawEnvironment(gl, uniforms) {
     environment.rock.numVertices);
 
   // draw some foxes
-  modelMatrix.setTranslate(0.0, 13.0, 0.0);
+  modelMatrix.setTranslate(0.0, 6.0, 0.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(
     gl.TRIANGLE_STRIP,
@@ -434,7 +434,7 @@ function drawEnvironment(gl, uniforms) {
     environment.fox.numVertices);
 
   // draw the mountain
-  modelMatrix.setTranslate(-1.5, 23.0, 0.0);
+  modelMatrix.setTranslate(-1.5, 16.0, 0.0);
   modelMatrix.scale(10.0, 10.0, 5.0);
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 
@@ -561,7 +561,7 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatri
     gl.TRIANGLE_STRIP,
     eagle.startVertexOffset + eagle.middleWing.startVertexOffset,
     eagle.middleWing.numVertices);
-  
+ 
   // lower wing
   modelMatrix.translate(0.0, 0.0, 0.29);
   modelMatrix.rotate(state.wingAngle/1.5, 1, 0, 0);
@@ -575,6 +575,22 @@ function drawEagleWing(gl, eagle, state, modelMatrix, u_ModelMatrix, normalMatri
     gl.TRIANGLE_STRIP,
     eagle.startVertexOffset + eagle.lowerWing.startVertexOffset,
     eagle.lowerWing.numVertices);
+
+  // draw 3D axes
+  pushMatrix(modelMatrix);
+  modelMatrix.scale(0.15, 0.15, 0.15);
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+  var environment = globals.data.environment;
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    environment.startVertexOffset + environment.axes.startVertexOffset,
+    environment.axes.numVertices);
+
+  modelMatrix = popMatrix();
 }
 
 function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
@@ -701,6 +717,22 @@ function drawFox(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_Nor
     gl.TRIANGLE_STRIP,
     fox.startVertexOffset + fox.lowerTail.startVertexOffset,
     fox.lowerTail.numVertices);
+
+  // draw 3D axes
+  pushMatrix(modelMatrix);
+  modelMatrix.scale(0.2, 0.2, -0.2);  // flip to right-hand
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+  var environment = globals.data.environment;
+  gl.drawArrays(
+    gl.TRIANGLE_STRIP,
+    environment.startVertexOffset + environment.axes.startVertexOffset,
+    environment.axes.numVertices);
+
+  modelMatrix = popMatrix();
 }
 
 function drawFoxEar(gl, fox, state, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix) {
