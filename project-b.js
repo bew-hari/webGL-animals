@@ -85,7 +85,7 @@ function initGlobals() {
 
     light: {
       type: 0,
-      pos: { x: 0.0, y: -10.0, z: 10.0, },
+      pos: { x: 0.0, y: -5.0, z: 5.0, },
     },
 
     orientation: {
