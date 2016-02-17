@@ -111,7 +111,7 @@ function make3DAxes() {
   modB = UTILS.makeCapOptions(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 5.0, 0.0, 0.0, 1.0, 1.0);
   i = UTILS.makeTube(numCapVertices, zAxis, i, [modA, modB]);
 
-//*
+  // put all 3 axes together
   var vertices = new Float32Array(xAxis.length + yAxis.length + zAxis.length + 4 * FLOATS_PER_VERTEX);
   i = 0;
   vertices.set(xAxis, i);
@@ -122,6 +122,7 @@ function make3DAxes() {
     vertices[i] = vertices[i-FLOATS_PER_VERTEX];
   }
 
+  // copy first vertex
   for (var j=0; j<FLOATS_PER_VERTEX; j++, i++) {
     vertices[i] = yAxis[j];
   }
@@ -133,12 +134,12 @@ function make3DAxes() {
     vertices[i] = vertices[i-FLOATS_PER_VERTEX];
   }
 
+  // copy first vertex
   for (var j=0; j<FLOATS_PER_VERTEX; j++, i++) {
     vertices[i] = zAxis[j];
   }
   vertices.set(zAxis, i);
   i += zAxis.length;
-//*/
 
   return vertices;
 }
