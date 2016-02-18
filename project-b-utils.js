@@ -80,7 +80,7 @@ var UTILS = {
       }
     }
 //*/
-/*  alternate normal vector calculations (not working for some objects)
+/*  alternative normal vector calculations (looks weird for some objects)
     for (var v=0; v<numCapVertices; v++, i+=FLOATS_PER_VERTEX*2) {
       pos.set(
         Math.cos(2*Math.PI*(v)/numCapVertices),
@@ -156,10 +156,6 @@ var UTILS = {
 
     normTransform.setInverseOf(posTransform);
     normTransform.transpose();
-    //normTransform.setScale(scaleX, scaleY, scaleZ);
-    //normTransform.rotate(rotateAngle, rotateX, rotateY, rotateZ);
-    //normTransform.invert();
-    //normTransform.transpose();
 
     return {
       posTransform: posTransform,
@@ -186,8 +182,6 @@ var UTILS = {
     posTransform.rotate(angle, 0, 0, 1);
     posTransform.scale(scaleX, scaleY, scaleZ);
 
-    //normTransform.setInverseOf(posTransform);
-    //normTransform.transpose();
     normTransform.setScale(scaleX, scaleY, scaleZ);
     normTransform.rotate(angle, 0, 0, 1);
     normTransform.invert();

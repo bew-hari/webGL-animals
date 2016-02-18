@@ -38,7 +38,6 @@ var FSHADER_SOURCE =
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
   '  gl_FragColor = v_Color;\n' +
-  //'  gl_FragColor = v_Color;\n' +
   '}\n';
 
 // constants
@@ -107,8 +106,16 @@ function initGlobals() {
     },
   };
 
-  globals.uniforms = null;
-  globals.canvas = null;
+  // update the UI
+  var lightTypes = document.getElementsByName('light-type');
+  for (var i=0; i<lightTypes.length; i++) {
+    lightTypes[i].checked = false;
+  }
+  lightTypes[globals.state.light.type].checked = true;
+  
+  document.getElementById('light-x').value = globals.state.light.pos.x;
+  document.getElementById('light-y').value = globals.state.light.pos.y;
+  document.getElementById('light-z').value = globals.state.light.pos.z;
 
   // mouse data
   globals.mouse = {
@@ -126,12 +133,12 @@ function initGlobals() {
       y: 0,
     },
   };
+
+  winResize();
 }
 
 function main() {
   initGlobals();
-
-  winResize();
 
   // Retrieve <canvas> element
   var canvas = globals.canvas;
@@ -274,7 +281,6 @@ function main() {
     
     var bounds = proj.near + ((proj.far - proj.near) / 3) * Math.tan(proj.angle/2 * Math.PI/180);
     globals.uniforms.projMatrix.setOrtho(-bounds*proj.aspectRatio, bounds*proj.aspectRatio, -bounds, bounds, proj.near, proj.far);
-    
     draw(gl);
     
     // request that the browser calls tick

@@ -170,10 +170,7 @@ function myMouseUp(e, gl) {
       && Math.abs(y - mouse.click.y) < 0.001) {
     
     // do something for click
-    //console.log(globals.state.view.pan);
-    var pan = globals.state.view.pan; var cylinderRadius = globals.state.view.cylinderRadius;
-    //console.log(Math.sin(pan.horizontal*Math.PI/180), -Math.cos(pan.horizontal*Math.PI/180), pan.vertical/cylinderRadius);
-    console.log(globals.state.view.lookAt);
+    // or not? that's fine too
   }
 }
 
